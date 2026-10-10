@@ -1,6 +1,7 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, MapPin, GraduationCap, Landmark, Truck, ArrowRight, CheckCircle } from "lucide-react";
+import { Search, MapPin, GraduationCap, Landmark, Truck, ArrowRight } from "lucide-react";
 import SectionDivider from "./SectionDivider";
 
 const BUYERS_IMG = "/images/buyers/luxury-home-interior.png";
@@ -14,10 +15,7 @@ const features = [
 ];
 
 export default function BuyersSection() {
-  const scrollTo = (id) => {
-    const el = document.querySelector(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
+  const navigate = useNavigate();
 
   return (
     <section id="buyers" className="relative bg-white py-20 lg:py-28 overflow-hidden">
@@ -42,8 +40,8 @@ export default function BuyersSection() {
             </div>
             {/* Floating stat */}
             <div className="absolute -bottom-6 -right-4 lg:-right-8 bg-[#0A192F] text-white p-6 rounded-xl shadow-2xl">
-              <p className="text-[#C5A059] font-display text-3xl font-semibold">2,500+</p>
-              <p className="font-body text-white/70 text-sm">Homes Available</p>
+              <p className="text-[#C5A059] font-display text-3xl font-semibold">HAR IDX</p>
+              <p className="font-body text-white/70 text-sm">Explore Current Listings</p>
             </div>
           </motion.div>
 
@@ -84,7 +82,7 @@ export default function BuyersSection() {
             </div>
 
             <button
-              onClick={() => scrollTo("#communities")}
+              onClick={() => navigate("/homes")}
               className="px-8 py-3.5 bg-[#C5A059] text-white font-body font-semibold rounded hover:bg-[#B08A3E] transition-all duration-300 flex items-center gap-2 shadow-lg shadow-[#C5A059]/20"
             >
               Start Your Home Search

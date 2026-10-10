@@ -11,8 +11,8 @@ const columns = [
   },
   {
     icon: Handshake,
-    title: "Trusted Network",
-    desc: "Access to quality, vetted local service providers through the Link Business Alliance — professionals you can count on.",
+    title: "Connected Resources",
+    desc: "Golden Marketing Services brings home search and local resources together; Golden Cross Realty provides the brokerage services.",
   },
   {
     icon: LayoutGrid,

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
 import TrustSection from "@/components/landing/TrustSection";
@@ -8,11 +8,11 @@ import SellersSection from "@/components/landing/SellersSection";
 import LocalServicesSection from "@/components/landing/LocalServicesSection";
 import MarketReportSection from "@/components/landing/MarketReportSection";
 import WhyChooseUsSection from "@/components/landing/WhyChooseUsSection";
-import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import LeadFormSection from "@/components/landing/LeadFormSection";
 import Footer from "@/components/landing/Footer";
 
 export default function Home() {
+  useEffect(() => { document.title = "Homes Around North Houston | Golden Cross Realty"; }, []);
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -24,7 +24,6 @@ export default function Home() {
       <LocalServicesSection />
       <MarketReportSection />
       <WhyChooseUsSection />
-      <TestimonialsSection />
       <LeadFormSection />
       <Footer />
     </div>

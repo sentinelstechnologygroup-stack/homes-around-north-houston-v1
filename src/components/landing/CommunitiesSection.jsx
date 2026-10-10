@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import SectionDivider from "./SectionDivider";
@@ -96,9 +97,9 @@ export default function CommunitiesSection() {
                 <p className="font-body text-white/70 text-sm leading-relaxed mb-4 max-w-md">
                   {c.desc}
                 </p>
-                <span className="inline-flex items-center gap-2 text-[#C5A059] font-body text-sm font-semibold group-hover:gap-3 transition-all duration-300">
+                <Link to={`/homes?${new URLSearchParams(c.name === "Klein" ? { zip: "77379" } : { city: c.name })}`} className="inline-flex items-center gap-2 text-[#C5A059] font-body text-sm font-semibold group-hover:gap-3 transition-all duration-300">
                   View Listings <ArrowRight className="w-4 h-4" />
-                </span>
+                </Link>
               </div>
             </motion.div>
           ))}

@@ -40,7 +40,7 @@ export default function SellersSection() {
               <br />Home's Value
             </h2>
             <p className="font-body text-white/70 text-lg leading-relaxed mb-4">
-              Before listing your home, connect with our network of trusted professionals who can help increase market value through:
+              Discuss your listing plan with Golden Cross Realty and consider which preparation tasks make sense for your property:
             </p>
 
             <div className="grid grid-cols-2 gap-3 mb-8">
@@ -61,7 +61,7 @@ export default function SellersSection() {
 
             <div className="bg-[#C5A059]/10 border border-[#C5A059]/20 rounded-lg p-5 mb-8">
               <p className="font-body text-white/90 text-sm leading-relaxed">
-                <span className="text-[#C5A059] font-semibold">The Link Business Alliance</span> network helps homeowners prepare their properties to attract stronger offers and maximize selling potential.
+                <span className="text-[#C5A059] font-semibold">Golden Marketing Services</span> powers this website. Jonathan Currey at Golden Cross Realty provides the brokerage guidance for preparing, pricing, and listing your home.
               </p>
             </div>
 
@@ -91,8 +91,8 @@ export default function SellersSection() {
               <div className="absolute inset-4 border border-[#C5A059]/30 rounded-lg pointer-events-none" />
             </div>
             <div className="absolute -bottom-6 -left-4 lg:-left-8 bg-white text-[#0A192F] p-6 rounded-xl shadow-2xl">
-              <p className="text-[#C5A059] font-display text-3xl font-semibold">+18%</p>
-              <p className="font-body text-[#0A192F]/60 text-sm">Avg. Value Increase</p>
+              <p className="text-[#9A7437] font-display text-2xl font-semibold">Prepare to Sell</p>
+              <p className="font-body text-[#0A192F]/75 text-sm">Plan with Golden Cross Realty</p>
             </div>
           </motion.div>
         </div>

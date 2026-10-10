@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { motion } from "framer-motion"
 import { Send, CheckCircle } from "lucide-react"
+import { BROKERAGE } from "@/lib/siteConfig"
 
 const interests = [
   { value: "buying", label: "Buying" },
@@ -9,7 +10,7 @@ const interests = [
   { value: "local_services", label: "Local Services" },
 ]
 
-const CONTACT_EMAIL = "info@homesaroundnorthhouston.com"
+const CONTACT_EMAIL = BROKERAGE.email
 
 export default function LeadFormSection() {
   const [form, setForm] = useState({
@@ -52,10 +53,12 @@ ${form.message || "No message provided."}`
             className="bg-white rounded-2xl p-12 shadow-xl"
           >
             <CheckCircle className="w-16 h-16 text-[#C5A059] mx-auto mb-6" />
-            <h3 className="font-display text-2xl font-semibold text-[#0A192F] mb-3">Thank You!</h3>
+            <h3 className="font-display text-2xl font-semibold text-[#0A192F] mb-3">Your Email Draft Is Ready</h3>
             <p className="font-body text-[#0A192F]/60 text-lg">
               Your email app should open with the inquiry details filled in. Send that message and we will be in touch shortly.
             </p>
+            <a href={`mailto:${CONTACT_EMAIL}`} className="inline-block mt-5 underline">Email Jonathan directly</a>
+            <button onClick={() => setSubmitted(false)} className="block mx-auto mt-4 underline">Return to inquiry form</button>
           </motion.div>
         </div>
       </section>
@@ -86,7 +89,7 @@ ${form.message || "No message provided."}`
                 "Personalized home search assistance",
                 "Free market analysis for sellers",
                 "Investment property guidance",
-                "Vetted local professional referrals",
+                "Local homeowner resources",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059]" />
@@ -179,8 +182,9 @@ ${form.message || "No message provided."}`
                 className="w-full py-3.5 bg-[#C5A059] text-white font-body font-semibold rounded-lg hover:bg-[#B08A3E] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#C5A059]/20"
               >
                 <Send className="w-4 h-4" />
-                Request Information
+                Prepare Email to Jonathan
               </button>
+              <p className="text-sm text-[#0A192F]/75 leading-relaxed">This form opens your email application with a draft to Golden Cross Realty. Review and send the email to submit your inquiry. Golden Marketing Services supplies the website technology.</p>
             </form>
           </motion.div>
         </div>

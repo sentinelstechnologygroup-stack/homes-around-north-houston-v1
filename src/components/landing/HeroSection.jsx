@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, DollarSign, MapPin, Home, ChevronDown } from "lucide-react";
 
@@ -14,10 +15,19 @@ const priceRanges = [
 ];
 
 export default function HeroSection() {
+  const navigate = useNavigate();
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [priceRange, setPriceRange] = useState("Any Price");
+  const search = (event) => {
+    event.preventDefault();
+    const prices = { "$100k – $250k": [100000, 250000], "$250k – $500k": [250000, 500000], "$500k – $750k": [500000, 750000], "$750k – $1M": [750000, 1000000], "$1M+": [1000000, ""] };
+    const [minPrice, maxPrice] = prices[priceRange] || ["", ""];
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries({ city, zip, neighborhood, minPrice, maxPrice })) if (value) params.set(key, String(value));
+    navigate(`/homes?${params}`);
+  };
 
   const scrollTo = (id) => {
     const el = document.querySelector(id);
@@ -34,6 +44,7 @@ export default function HeroSection() {
           loop
           playsInline
           className="w-full h-full object-cover"
+          poster={HERO_IMG}
         >
           <source src="/videos/hero/north-houston-hero.mp4" type="video/mp4" />
         </video>
@@ -90,7 +101,7 @@ export default function HeroSection() {
             className="flex flex-wrap gap-4 mb-12"
           >
             <button
-              onClick={() => scrollTo("#communities")}
+              onClick={() => navigate("/homes")}
               className="px-8 py-3.5 bg-[#C5A059] text-white font-body font-semibold text-base rounded hover:bg-[#B08A3E] transition-all duration-300 flex items-center gap-2 shadow-lg shadow-[#C5A059]/20"
             >
               <Search className="w-4 h-4" />
@@ -113,12 +124,13 @@ export default function HeroSection() {
           transition={{ duration: 1, delay: 0.7 }}
           className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6 max-w-4xl"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <form onSubmit={search} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C5A059]" />
               <input
                 type="text"
                 placeholder="City"
+                aria-label="City"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/50 font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors"
@@ -129,6 +141,9 @@ export default function HeroSection() {
               <input
                 type="text"
                 placeholder="Zip Code"
+                aria-label="ZIP code"
+                inputMode="numeric"
+                pattern="[0-9]{5}"
                 value={zip}
                 onChange={(e) => setZip(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/50 font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors"
@@ -139,6 +154,7 @@ export default function HeroSection() {
               <input
                 type="text"
                 placeholder="Neighborhood"
+                aria-label="Neighborhood"
                 value={neighborhood}
                 onChange={(e) => setNeighborhood(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/50 font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors"
@@ -147,6 +163,7 @@ export default function HeroSection() {
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C5A059]" />
               <select
+                aria-label="Price range"
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors appearance-none"
@@ -159,11 +176,11 @@ export default function HeroSection() {
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
             </div>
-            <button className="w-full py-3 bg-[#C5A059] text-white font-body font-semibold rounded-lg hover:bg-[#B08A3E] transition-all duration-300 flex items-center justify-center gap-2">
+            <button type="submit" className="w-full py-3 bg-[#C5A059] text-white font-body font-semibold rounded-lg hover:bg-[#B08A3E] transition-all duration-300 flex items-center justify-center gap-2">
               <Search className="w-4 h-4" />
               Search
             </button>
-          </div>
+          </form>
         </motion.div>
       </div>
 

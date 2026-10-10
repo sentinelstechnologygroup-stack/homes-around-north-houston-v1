@@ -117,12 +117,14 @@
   transform-origin: left center;
 }
 
-/* Alliance pulse */
-@keyframes alliancePulse {
+/* Resource icon pulse */
+@keyframes resourcePulse {
   0%, 100% { box-shadow: 0 0 0 0 hsla(39, 48%, 55%, 0.4); }
   50% { box-shadow: 0 0 0 8px hsla(39, 48%, 55%, 0); }
 }
 
-.alliance-pulse {
-  animation: alliancePulse 2s ease-in-out infinite;
+.resource-pulse {
+  animation: resourcePulse 2s ease-in-out infinite;
 }
+
+section[id] { scroll-margin-top: 7rem; }

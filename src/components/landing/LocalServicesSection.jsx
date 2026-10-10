@@ -42,13 +42,13 @@ export default function LocalServicesSection() {
           className="text-center mb-6"
         >
           <p className="text-[#C5A059] font-body text-sm font-semibold tracking-[0.2em] uppercase mb-3">
-            Link Business Alliance
+            Golden Marketing Services
           </p>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0A192F] mb-4">
-            Trusted Local Professionals
+            Local Homeowner Resources
           </h2>
           <p className="font-body text-[#0A192F]/60 text-lg max-w-xl mx-auto">
-            Need help before buying or selling? Connect with preferred Link Business Alliance members.
+            Explore services you may need before buying or selling. Ask Jonathan about local resources and independently verify each provider’s qualifications, licensing, and insurance.
           </p>
         </motion.div>
 
@@ -60,9 +60,9 @@ export default function LocalServicesSection() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.03 }}
-              className="group relative flex flex-col items-center gap-3 p-5 rounded-xl bg-[#F1F3F5] hover:bg-[#0A192F] cursor-pointer transition-all duration-500"
+              className="group relative flex flex-col items-center gap-3 p-5 rounded-xl bg-[#F1F3F5] hover:bg-[#0A192F] transition-all duration-500"
             >
-              <div className="w-12 h-12 rounded-full bg-[#C5A059]/10 group-hover:bg-[#C5A059]/20 flex items-center justify-center transition-colors duration-500 alliance-pulse">
+              <div className="w-12 h-12 rounded-full bg-[#C5A059]/10 group-hover:bg-[#C5A059]/20 flex items-center justify-center transition-colors duration-500 resource-pulse">
                 <cat.icon className="w-5 h-5 text-[#C5A059]" />
               </div>
               <span className="font-body text-sm font-medium text-[#0A192F] group-hover:text-white text-center transition-colors duration-500">
@@ -83,7 +83,7 @@ export default function LocalServicesSection() {
             onClick={() => scrollTo("#contact")}
             className="px-8 py-3.5 bg-[#C5A059] text-white font-body font-semibold rounded hover:bg-[#B08A3E] transition-all duration-300 inline-flex items-center gap-2 shadow-lg shadow-[#C5A059]/20"
           >
-            Find Local Professionals
+            Ask About Local Resources
             <ArrowRight className="w-4 h-4" />
           </button>
         </motion.div>

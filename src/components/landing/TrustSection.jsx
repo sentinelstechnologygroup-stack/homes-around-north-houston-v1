@@ -21,8 +21,8 @@ const blocks = [
   },
   {
     icon: Users,
-    title: "Local Business Network",
-    desc: "Access vetted service providers from the Link Business Alliance.",
+    title: "Local Resources",
+    desc: "Explore home-service categories on this Golden Marketing Services-powered website.",
   },
 ];
 
