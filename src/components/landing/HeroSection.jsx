@@ -78,7 +78,7 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="text-white/80 font-body text-lg md:text-xl leading-relaxed mb-4 max-w-xl"
           >
-            Find your next home, plan your sale, or explore a rental-property investment.
+            Find your next home, plan your sale, or explore an investment property.
           </motion.p>
 
           <motion.p
@@ -87,7 +87,7 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-white/60 font-body text-base leading-relaxed mb-8 max-w-xl"
           >
-            Search homes across North Houston and talk with Golden Cross Realty about buying, selling, or investing in rental properties. Start with the properties, neighborhoods, and market information that fit your goals.
+            Search homes across North Houston and talk with Golden Cross Realty about buying, selling, or investment properties. Start with the properties, neighborhoods, and market information that fit your goals.
           </motion.p>
 
           <motion.div
@@ -110,7 +110,7 @@ export default function HeroSection() {
               <DollarSign className="w-4 h-4" />
               Request Home Value Analysis
             </button>
-            <button onClick={() => navigate("/?interest=investing#contact")} className="text-white/85 underline underline-offset-4 font-body text-sm hover:text-[#C5A059]">Explore Rental Property Investing</button>
+            <button onClick={() => navigate("/?interest=investing#contact")} className="text-white/85 underline underline-offset-4 font-body text-sm hover:text-[#C5A059]">Explore Investment Properties</button>
           </motion.div>
         </div>
 

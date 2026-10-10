@@ -7,7 +7,7 @@ import { BROKERAGE } from "@/lib/siteConfig"
 const interests = [
   { value: "buying", label: "Buying" },
   { value: "selling", label: "Selling" },
-  { value: "investing", label: "Rental Property Investing" },
+  { value: "investing", label: "Investment Properties" },
   { value: "buying_and_selling", label: "Buying & Selling" },
 ]
 
@@ -90,14 +90,14 @@ ${form.message || "No message provided."}`
               <br />in North Houston
             </h2>
             <p className="font-body text-[#0A192F]/60 text-lg leading-relaxed mb-8">
-              Tell Golden Cross Realty about the home you want to buy, the property you plan to sell, or your rental-property investment goals. Share your budget, timeline, and questions to start the conversation.
+              Tell Golden Cross Realty about the home you want to buy, the property you plan to sell, or your investment property goals. Share your budget, timeline, and questions to start the conversation.
             </p>
 
             <div className="space-y-4">
               {[
                 "Personalized home search assistance",
                 "Free market analysis for sellers",
-                "Rental-property purchase guidance",
+                "Investment property purchase guidance",
                 "A plan for buying and selling together",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">

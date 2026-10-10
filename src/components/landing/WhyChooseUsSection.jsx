@@ -16,8 +16,8 @@ const columns = [
   },
   {
     icon: LayoutGrid,
-    title: "Rental-Property Guidance",
-    desc: "Discuss potential rental-property purchases, your budget, and the local market with Golden Cross Realty.",
+    title: "Investment Property Guidance",
+    desc: "Discuss potential investment property purchases, your budget, and the local market with Golden Cross Realty.",
   },
 ];
 

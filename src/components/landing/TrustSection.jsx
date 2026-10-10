@@ -25,8 +25,8 @@ const blocks = [
   },
   {
     icon: Building2,
-    title: "Invest in Rental Property",
-    desc: "Explore rental-property purchases that fit your budget and investment goals.",
+    title: "Investment Properties",
+    desc: "Explore investment property purchases that fit your budget and investment goals.",
     to: "/?interest=investing#contact", action: "Discuss Your Investment",
   },
 ];
