@@ -1,6 +1,6 @@
 # Homes Around North Houston
 
-Vite/React website for Homes Around North Houston / Golden Cross Realty, with website technology supplied by Golden Marketing Services.
+Vite/React website for Homes Around North Houston / Golden Cross Realty, with website technology supplied by GMS Pro.
 
 ## Development and checks
 
@@ -14,7 +14,7 @@ npm run typecheck
 
 ## Routes
 
-- `/`: home, buyer/seller guidance, investment properties, communities, and email inquiry.
+- `/`: home, buyer/seller guidance, investment properties, communities, and GMS inquiry.
 - `/homes`: Golden Cross Realty's existing HAR IDX search, account identifier 605032.
 - `/market-reports`: links to HAR's published reports and local-analysis requests.
 - `/privacy` and `/terms`: disclosures describing the implemented website behavior.
@@ -35,7 +35,7 @@ HAR search is embedded directly, preserving HAR's listing attribution and presen
 
 ## Operational limitations
 
-- The inquiry form prepares an email to Broker@GoldenCrossRealty.com; the visitor must send it. No GMS CRM ingestion or automatic email delivery is implemented here.
+- The GMS intake change is prepared locally pending campaign configuration and launch readiness. Production remains on its prior form until the new route is ready. See `docs/gms-lead-routing.md`.
 - Market reports link to HAR's published source, not a live statistical API. Old unsourced market figures, inventory counts, uplift claims, and unverified testimonials were removed.
 - Business-networking and local-service directories have been removed. The inquiry supports buying, selling, investment properties, and buying/selling together.
 - The existing Golden Cross IABS is reused; the broker remains responsible for keeping its details current.

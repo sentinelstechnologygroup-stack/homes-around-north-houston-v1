@@ -4,7 +4,7 @@ import { BROKERAGE, TECHNOLOGY_DISCLOSURE } from '@/lib/siteConfig';
 export default function Legal({type}){
  const privacy=type==='privacy';
  const sections=privacy?[
- ['Information you choose to send','The inquiry form prepares an email containing the name, email address, optional phone number, interest, and message you enter. Your email application opens a draft addressed to Golden Cross Realty. You must send that email yourself; opening the draft does not confirm delivery.'],
+ ['Information you choose to send','The inquiry form sends your name, phone number, email address, real estate interest, optional property preferences, message, and contact permission to GMS Pro for inquiry review and verification. Website and campaign source identifiers are recorded with the inquiry. A receipt is shown only after the intake service confirms acceptance.'],
  ['How inquiries are used','Information you send is used to respond to your inquiry and discuss the real estate assistance you requested. Golden Cross Realty provides brokerage services; GMS Pro provides this website’s technology.'],
  ['Third-party services','HAR supplies the embedded property search. Interacting with HAR’s tools is subject to HAR’s privacy practices and terms. Website hosting, embedded content, and externally loaded fonts may process technical information such as IP addresses and browser details under their providers’ policies.'],
  ['Privacy questions','Contact Golden Cross Realty using the email below to ask about information you have sent or request a correction. Do not include financial account details or other sensitive documents in this inquiry form.']
