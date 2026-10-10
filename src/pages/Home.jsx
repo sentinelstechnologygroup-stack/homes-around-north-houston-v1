@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
 import TrustSection from "@/components/landing/TrustSection";
@@ -12,10 +12,10 @@ import LeadFormSection from "@/components/landing/LeadFormSection";
 import Footer from "@/components/landing/Footer";
 
 export default function Home() {
-  useEffect(() => { document.title = "Homes Around North Houston | Golden Cross Realty"; }, []);
   return (
     <div className="min-h-screen">
       <Navbar />
+      <main id="main-content">
       <HeroSection />
       <TrustSection />
       <CommunitiesSection />
@@ -25,6 +25,7 @@ export default function Home() {
       <MarketReportSection />
       <WhyChooseUsSection />
       <LeadFormSection />
+      </main>
       <Footer />
     </div>
   );

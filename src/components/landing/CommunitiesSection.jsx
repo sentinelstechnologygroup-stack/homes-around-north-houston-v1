@@ -7,44 +7,44 @@ import SectionDivider from "./SectionDivider";
 const communities = [
   {
     name: "The Woodlands",
-    img: "/images/communities/the-woodlands.png",
+    img: "/images/communities/the-woodlands.webp",
     desc: "Master-planned luxury living with top-rated schools, nature trails, and vibrant town center.",
     large: true,
   },
   {
     name: "Magnolia",
-    img: "/images/communities/magnolia.png",
+    img: "/images/communities/magnolia.webp",
     desc: "Texas charm meets modern living with sprawling estates and family-friendly neighborhoods.",
   },
   {
     name: "Tomball",
-    img: "/images/communities/tomball.png",
+    img: "/images/communities/tomball.webp",
     desc: "Historic downtown charm, excellent schools, and a thriving local community.",
   },
   {
     name: "Conroe",
-    img: "/images/communities/conroe.png",
+    img: "/images/communities/conroe.webp",
     desc: "Lakeside living, growing economy, and affordable luxury on Lake Conroe.",
     large: true,
   },
   {
     name: "Spring",
-    img: "/images/communities/spring.png",
+    img: "/images/communities/spring.webp",
     desc: "Central location, diverse neighborhoods, and easy access to Houston.",
   },
   {
     name: "Cypress",
-    img: "/images/communities/cypress.png",
+    img: "/images/communities/cypress.webp",
     desc: "Resort-style communities, top schools, and master-planned neighborhoods.",
   },
   {
     name: "Montgomery",
-    img: "/images/communities/montgomery.png",
+    img: "/images/communities/montgomery.webp",
     desc: "Country estate living with Texas ranch charm and scenic landscapes.",
   },
   {
     name: "Klein",
-    img: "/images/communities/klein.png",
+    img: "/images/communities/klein.webp",
     desc: "Family-friendly neighborhoods with acclaimed schools and community parks.",
   },
 ];
@@ -81,6 +81,7 @@ export default function CommunitiesSection() {
               }`}
             >
               <img
+                loading="lazy" decoding="async"
                 src={c.img}
                 alt={`${c.name} community North Houston`}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"

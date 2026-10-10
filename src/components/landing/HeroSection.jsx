@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, DollarSign, MapPin, Home, ChevronDown } from "lucide-react";
 
-const HERO_IMG = "/images/hero/north-houston-hero.png";
+const HERO_IMG = "/images/hero/north-houston-hero.webp";
 
 const priceRanges = [
   "Any Price",
@@ -16,6 +16,7 @@ const priceRanges = [
 
 export default function HeroSection() {
   const navigate = useNavigate();
+  const [playVideo, setPlayVideo] = useState(false);
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
@@ -34,19 +35,13 @@ export default function HeroSection() {
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-cover"
-          poster={HERO_IMG}
-        >
+        {playVideo ? <video autoPlay muted loop playsInline preload="none" className="w-full h-full object-cover" poster={HERO_IMG}>
           <source src="/videos/hero/north-houston-hero.mp4" type="video/mp4" />
-        </video>
+        </video> : <img src={HERO_IMG} alt="" width="1600" height="900" className="w-full h-full object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-b from-[#0A192F]/70 via-[#0A192F]/50 to-[#0A192F]/90" />
       </div>
 
+      <button type="button" onClick={() => setPlayVideo(current => !current)} aria-pressed={playVideo} className="absolute bottom-3 right-4 z-20 text-white/80 text-xs underline underline-offset-4">{playVideo ? "Pause background video" : "Play background video"}</button>
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
         <div className="max-w-3xl">
@@ -98,7 +93,7 @@ export default function HeroSection() {
           >
             <button
               onClick={() => navigate("/homes")}
-              className="px-8 py-3.5 bg-[#C5A059] text-white font-body font-semibold text-base rounded hover:bg-[#B08A3E] transition-all duration-300 flex items-center gap-2 shadow-lg shadow-[#C5A059]/20"
+              className="px-8 py-3.5 bg-[#C5A059] text-[#0A192F] font-body font-semibold text-base rounded hover:bg-[#B08A3E] transition-all duration-300 flex items-center gap-2 shadow-lg shadow-[#C5A059]/20"
             >
               <Search className="w-4 h-4" />
               Search Homes
@@ -173,7 +168,7 @@ export default function HeroSection() {
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
             </div>
-            <button type="submit" className="w-full py-3 bg-[#C5A059] text-white font-body font-semibold rounded-lg hover:bg-[#B08A3E] transition-all duration-300 flex items-center justify-center gap-2">
+            <button type="submit" className="w-full py-3 bg-[#C5A059] text-[#0A192F] font-body font-semibold rounded-lg hover:bg-[#B08A3E] transition-all duration-300 flex items-center justify-center gap-2">
               <Search className="w-4 h-4" />
               Search
             </button>

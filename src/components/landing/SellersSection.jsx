@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, BarChart3, Tag, Camera, Calendar, MessageCircle, ClipboardCheck } from "lucide-react";
 import SectionDivider from "./SectionDivider";
 
-const SELLERS_IMG = "/images/sellers/home-curb-appeal.png";
+const SELLERS_IMG = "/images/sellers/home-curb-appeal.webp";
 
 const services = [
   { icon: BarChart3, label: "Home Value Analysis" },
@@ -81,6 +81,7 @@ export default function SellersSection() {
           >
             <div className="relative rounded-xl overflow-hidden">
               <img
+                loading="lazy" decoding="async"
                 src={SELLERS_IMG}
                 alt="Home prepared for sale with curb appeal"
                 className="w-full aspect-[4/3] object-cover"
