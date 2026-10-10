@@ -57,7 +57,7 @@ ${form.message || "No message provided."}`
             <p className="font-body text-[#0A192F]/60 text-lg">
               Your email app should open with the inquiry details filled in. Send that message and we will be in touch shortly.
             </p>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="inline-block mt-5 underline">Email Jonathan directly</a>
+            <a href={`mailto:${CONTACT_EMAIL}`} className="inline-block mt-5 underline">Email Golden Cross Realty</a>
             <button onClick={() => setSubmitted(false)} className="block mx-auto mt-4 underline">Return to inquiry form</button>
           </motion.div>
         </div>
@@ -182,7 +182,7 @@ ${form.message || "No message provided."}`
                 className="w-full py-3.5 bg-[#C5A059] text-white font-body font-semibold rounded-lg hover:bg-[#B08A3E] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#C5A059]/20"
               >
                 <Send className="w-4 h-4" />
-                Prepare Email to Jonathan
+                Prepare Email to Golden Cross Realty
               </button>
               <p className="text-sm text-[#0A192F]/75 leading-relaxed">This form opens your email application with a draft to Golden Cross Realty. Review and send the email to submit your inquiry. Golden Marketing Services supplies the website technology.</p>
             </form>

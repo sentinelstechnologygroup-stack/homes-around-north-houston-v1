@@ -61,7 +61,7 @@ export default function SellersSection() {
 
             <div className="bg-[#C5A059]/10 border border-[#C5A059]/20 rounded-lg p-5 mb-8">
               <p className="font-body text-white/90 text-sm leading-relaxed">
-                <span className="text-[#C5A059] font-semibold">Golden Marketing Services</span> powers this website. Jonathan Currey at Golden Cross Realty provides the brokerage guidance for preparing, pricing, and listing your home.
+                <span className="text-[#C5A059] font-semibold">Golden Marketing Services</span> powers this website. Golden Cross Realty provides the brokerage guidance for preparing, pricing, and listing your home.
               </p>
             </div>
 

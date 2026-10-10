@@ -48,7 +48,7 @@ export default function LocalServicesSection() {
             Local Homeowner Resources
           </h2>
           <p className="font-body text-[#0A192F]/60 text-lg max-w-xl mx-auto">
-            Explore services you may need before buying or selling. Ask Jonathan about local resources and independently verify each provider’s qualifications, licensing, and insurance.
+            Explore services you may need before buying or selling. Ask Golden Cross Realty about local resources and independently verify each provider’s qualifications, licensing, and insurance.
           </p>
         </motion.div>
 

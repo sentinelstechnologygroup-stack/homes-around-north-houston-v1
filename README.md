@@ -1,6 +1,6 @@
 # Homes Around North Houston
 
-Vite/React website for Jonathan Currey / Golden Cross Realty, with website technology supplied by Golden Marketing Services.
+Vite/React website for Homes Around North Houston / Golden Cross Realty, with website technology supplied by Golden Marketing Services.
 
 ## Development and checks
 
@@ -15,7 +15,7 @@ npm run typecheck
 ## Routes
 
 - `/`: home, buyer/seller resources, communities, local resources, and email inquiry.
-- `/homes`: Jonathan's existing HAR IDX search, account identifier 605032.
+- `/homes`: Golden Cross Realty's existing HAR IDX search, account identifier 605032.
 - `/market-reports`: links to HAR's published reports and local-analysis requests.
 - `/privacy` and `/terms`: disclosures describing the implemented website behavior.
 
@@ -23,7 +23,7 @@ Vercel's SPA rewrite supports direct navigation and refreshes on these routes. I
 
 ## Branding, disclosures, and IDX
 
-`src/lib/siteConfig.js` centralizes the brokerage contact, technology disclosure, HAR destinations, and existing publicly hosted Golden Cross Realty disclosure PDFs. GMS is identified as the technology provider; Golden Cross Realty supplies brokerage services. Do not imply that GMS has its own MLS license or that Jonathan's authorization applies to other GMS customers.
+`src/lib/siteConfig.js` centralizes the brokerage contact, technology disclosure, HAR destinations, and existing publicly hosted Golden Cross Realty disclosure PDFs. GMS is identified as the technology provider; Golden Cross Realty supplies brokerage services. Do not imply that GMS has its own MLS license or that this brokerage's authorization applies to other GMS customers.
 
 The October 4 conversation “Assess GMS Pro MLS feasibility” (01a10937-fd50-76a3-9e4a-74fe820bc292) supplied the CINC technology/service disclosure example. The implemented wording adapts its role separation to GMS and Golden Cross Realty; it is not a claim of legal certification.
 
