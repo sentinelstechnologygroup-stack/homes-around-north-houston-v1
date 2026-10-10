@@ -1,25 +1,22 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Hammer, Paintbrush, Trees, Droplets, Wrench, Sparkles, ClipboardCheck } from "lucide-react";
+import { ArrowRight, BarChart3, Tag, Camera, Calendar, MessageCircle, ClipboardCheck } from "lucide-react";
 import SectionDivider from "./SectionDivider";
 
 const SELLERS_IMG = "/images/sellers/home-curb-appeal.png";
 
 const services = [
-  { icon: Hammer, label: "Roofing" },
-  { icon: Paintbrush, label: "Painting" },
-  { icon: Trees, label: "Landscaping" },
-  { icon: Droplets, label: "Pool Repairs" },
-  { icon: Wrench, label: "Remodeling" },
-  { icon: Sparkles, label: "Cleaning Services" },
-  { icon: ClipboardCheck, label: "Home Inspections" },
+  { icon: BarChart3, label: "Home Value Analysis" },
+  { icon: Tag, label: "Pricing Strategy" },
+  { icon: Camera, label: "Listing Presentation" },
+  { icon: Calendar, label: "Showing Plan" },
+  { icon: MessageCircle, label: "Offer Negotiation" },
+  { icon: ClipboardCheck, label: "Closing Guidance" },
 ];
 
 export default function SellersSection() {
-  const scrollTo = (id) => {
-    const el = document.querySelector(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
+  const navigate = useNavigate();
 
   return (
     <section id="sellers" className="relative bg-[#0A192F] py-20 lg:py-28 overflow-hidden">
@@ -36,11 +33,11 @@ export default function SellersSection() {
               For Sellers
             </p>
             <h2 className="font-display text-3xl md:text-4xl font-semibold text-white leading-tight mb-6">
-              Maximize Your
-              <br />Home's Value
+              Sell Your Home
+              <br />with a Clear Plan
             </h2>
             <p className="font-body text-white/70 text-lg leading-relaxed mb-4">
-              Discuss your listing plan with Golden Cross Realty and consider which preparation tasks make sense for your property:
+              Work with Golden Cross Realty to understand your home’s position in the market and plan each step of your sale:
             </p>
 
             <div className="grid grid-cols-2 gap-3 mb-8">
@@ -61,12 +58,12 @@ export default function SellersSection() {
 
             <div className="bg-[#C5A059]/10 border border-[#C5A059]/20 rounded-lg p-5 mb-8">
               <p className="font-body text-white/90 text-sm leading-relaxed">
-                <span className="text-[#C5A059] font-semibold">GMS Pro</span> powers this website. Golden Cross Realty provides the brokerage guidance for preparing, pricing, and listing your home.
+                <span className="text-[#C5A059] font-semibold">Start with your home and your goals.</span> Tell Golden Cross Realty about your property, preferred timeline, and next move to request a comparative market analysis.
               </p>
             </div>
 
             <button
-              onClick={() => scrollTo("#contact")}
+              onClick={() => navigate("/?interest=selling#contact")}
               className="px-8 py-3.5 bg-[#C5A059] text-white font-body font-semibold rounded hover:bg-[#B08A3E] transition-all duration-300 flex items-center gap-2 shadow-lg shadow-[#C5A059]/20"
             >
               Request Home Value Analysis

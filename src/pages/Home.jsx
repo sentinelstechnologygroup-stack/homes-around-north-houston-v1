@@ -5,7 +5,7 @@ import TrustSection from "@/components/landing/TrustSection";
 import CommunitiesSection from "@/components/landing/CommunitiesSection";
 import BuyersSection from "@/components/landing/BuyersSection";
 import SellersSection from "@/components/landing/SellersSection";
-import LocalServicesSection from "@/components/landing/LocalServicesSection";
+import InvestmentSection from "@/components/landing/InvestmentSection";
 import MarketReportSection from "@/components/landing/MarketReportSection";
 import WhyChooseUsSection from "@/components/landing/WhyChooseUsSection";
 import LeadFormSection from "@/components/landing/LeadFormSection";
@@ -21,7 +21,7 @@ export default function Home() {
       <CommunitiesSection />
       <BuyersSection />
       <SellersSection />
-      <LocalServicesSection />
+      <InvestmentSection />
       <MarketReportSection />
       <WhyChooseUsSection />
       <LeadFormSection />

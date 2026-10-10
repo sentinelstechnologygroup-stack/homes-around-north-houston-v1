@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, MapPin, GraduationCap, Landmark, Truck, ArrowRight } from "lucide-react";
 import SectionDivider from "./SectionDivider";
@@ -88,6 +88,7 @@ export default function BuyersSection() {
               Start Your Home Search
               <ArrowRight className="w-4 h-4" />
             </button>
+            <Link to="/?interest=buying#contact" className="inline-block mt-5 font-semibold text-[#0A192F] underline underline-offset-4">Get Buying Guidance</Link>
           </motion.div>
         </div>
       </div>

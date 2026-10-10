@@ -1,18 +1,27 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Send, CheckCircle } from "lucide-react"
+import { useSearchParams } from "react-router-dom"
 import { BROKERAGE } from "@/lib/siteConfig"
 
 const interests = [
   { value: "buying", label: "Buying" },
   { value: "selling", label: "Selling" },
-  { value: "investing", label: "Investing" },
-  { value: "local_services", label: "Local Services" },
+  { value: "investing", label: "Rental Property Investing" },
+  { value: "buying_and_selling", label: "Buying & Selling" },
 ]
 
 const CONTACT_EMAIL = BROKERAGE.email
 
 export default function LeadFormSection() {
+  const [params] = useSearchParams()
+  const requestedInterest = params.get("interest")
+  useEffect(() => {
+    if (interests.some(item => item.value === requestedInterest)) {
+      setForm(current => ({ ...current, interested_in: requestedInterest }))
+      setSubmitted(false)
+    }
+  }, [requestedInterest])
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -77,19 +86,19 @@ ${form.message || "No message provided."}`
           >
             <p className="text-[#C5A059] font-body text-sm font-semibold tracking-[0.2em] uppercase mb-3">Get In Touch</p>
             <h2 className="font-display text-3xl md:text-4xl font-semibold text-[#0A192F] leading-tight mb-6">
-              Let&apos;s Talk About
-              <br />Your Goals
+              Buy, Sell, or Invest
+              <br />in North Houston
             </h2>
             <p className="font-body text-[#0A192F]/60 text-lg leading-relaxed mb-8">
-              Whether you&apos;re ready to buy, sell, invest, or connect with local professionals, we&apos;re here to help you navigate every step of the journey.
+              Tell Golden Cross Realty about the home you want to buy, the property you plan to sell, or your rental-property investment goals. Share your budget, timeline, and questions to start the conversation.
             </p>
 
             <div className="space-y-4">
               {[
                 "Personalized home search assistance",
                 "Free market analysis for sellers",
-                "Investment property guidance",
-                "Local homeowner resources",
+                "Rental-property purchase guidance",
+                "A plan for buying and selling together",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059]" />
@@ -113,6 +122,7 @@ ${form.message || "No message provided."}`
                 <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Name *</label>
                 <input
                   required
+                  aria-label="Name"
                   type="text"
                   value={form.name}
                   onChange={(e) => update("name", e.target.value)}
@@ -125,6 +135,7 @@ ${form.message || "No message provided."}`
                 <div>
                   <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Phone</label>
                   <input
+                    aria-label="Phone"
                     type="tel"
                     value={form.phone}
                     onChange={(e) => update("phone", e.target.value)}
@@ -136,6 +147,7 @@ ${form.message || "No message provided."}`
                   <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Email *</label>
                   <input
                     required
+                    aria-label="Email"
                     type="email"
                     value={form.email}
                     onChange={(e) => update("email", e.target.value)}
@@ -147,11 +159,12 @@ ${form.message || "No message provided."}`
 
               <div>
                 <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Interested In *</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {interests.map((opt) => (
                     <button
                       type="button"
                       key={opt.value}
+                      aria-pressed={form.interested_in === opt.value}
                       onClick={() => update("interested_in", opt.value)}
                       className={`px-4 py-2.5 rounded-lg border text-sm font-body font-medium transition-all duration-300 ${
                         form.interested_in === opt.value
@@ -168,6 +181,7 @@ ${form.message || "No message provided."}`
               <div>
                 <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Message</label>
                 <textarea
+                  aria-label="Message"
                   value={form.message}
                   onChange={(e) => update("message", e.target.value)}
                   rows={4}

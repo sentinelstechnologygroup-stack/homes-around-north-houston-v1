@@ -8,7 +8,7 @@ const links = [
   ["Buy a Home", "/#buyers"],
   ["Sell a Home", "/#sellers"],
   ["Market Reports", "/market-reports"],
-  ["Local Resources", "/#services"],
+  ["Rental Property Investing", "/#investing"],
   ["Contact Us", "/#contact"],
 ];
 
@@ -20,7 +20,7 @@ export default function Footer() {
           <div>
             <p className="text-[#C5A059] text-xs font-semibold uppercase tracking-[0.2em] mb-3">Your North Houston Home</p>
             <h2 className="font-display text-3xl leading-tight max-w-sm">Homes Around<br />North Houston</h2>
-            <p className="mt-4 max-w-sm text-sm text-white/75 leading-relaxed">Discover your next home and plan your next move with Golden Cross Realty.</p>
+            <p className="mt-4 max-w-sm text-sm text-white/75 leading-relaxed">Buy, sell, and explore rental-property investments with Golden Cross Realty.</p>
             <a href="https://www.goldenmarketingservices.com/" className="inline-flex items-center gap-3 mt-6 group">
               <span className="text-xs text-white/65">Powered by</span>
               <span className="text-[#C5A059] text-lg font-semibold tracking-tight">GMS <span className="text-white">Pro</span></span>

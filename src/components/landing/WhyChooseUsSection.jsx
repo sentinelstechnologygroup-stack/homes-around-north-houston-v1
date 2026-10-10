@@ -11,13 +11,13 @@ const columns = [
   },
   {
     icon: Handshake,
-    title: "Connected Resources",
-    desc: "GMS Pro brings home search and local resources together; Golden Cross Realty provides the brokerage services.",
+    title: "Buyer & Seller Guidance",
+    desc: "Golden Cross Realty helps you understand your options, compare homes, and prepare a selling strategy.",
   },
   {
     icon: LayoutGrid,
-    title: "One Resource Hub",
-    desc: "Everything homeowners, buyers, sellers, and investors need in one place. No more searching across dozens of sites.",
+    title: "Rental-Property Guidance",
+    desc: "Discuss potential rental-property purchases, your budget, and the local market with Golden Cross Realty.",
   },
 ];
 
@@ -40,7 +40,7 @@ export default function WhyChooseUsSection() {
             The Difference
           </p>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-white">
-            More Than Just Real Estate
+            Real Estate Guidance for Your Goals
           </h2>
         </motion.div>
 

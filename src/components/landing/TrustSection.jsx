@@ -1,28 +1,33 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Home, TrendingUp, Building2, Users } from "lucide-react";
+import { Home, TrendingUp, BarChart3, Building2, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import SectionDivider from "./SectionDivider";
 
 const blocks = [
   {
     icon: Home,
     title: "Buy a Home",
-    desc: "Find homes, neighborhoods, schools, and financing resources.",
+    desc: "Search available homes by location, budget, and the features you need.",
+    to: "/homes", action: "Search Homes",
   },
   {
     icon: TrendingUp,
     title: "Sell Your Home",
-    desc: "Get market insights and connect with trusted real estate professionals.",
+    desc: "Discuss your home's value, pricing strategy, and timeline with Golden Cross Realty.",
+    to: "/?interest=selling#contact", action: "Plan Your Sale",
+  },
+  {
+    icon: BarChart3,
+    title: "Understand the Market",
+    desc: "Explore housing reports and request an analysis for your neighborhood.",
+    to: "/market-reports", action: "View Market Reports",
   },
   {
     icon: Building2,
-    title: "Invest in Property",
-    desc: "Explore investment opportunities throughout North Houston.",
-  },
-  {
-    icon: Users,
-    title: "Local Resources",
-    desc: "Explore home-service categories on this GMS Pro-powered website.",
+    title: "Invest in Rental Property",
+    desc: "Explore rental-property purchases that fit your budget and investment goals.",
+    to: "/?interest=investing#contact", action: "Discuss Your Investment",
   },
 ];
 
@@ -38,11 +43,11 @@ export default function TrustSection() {
           className="text-center mb-16"
         >
           <p className="text-[#C5A059] font-body text-sm font-semibold tracking-[0.2em] uppercase mb-3">
-            Why Choose Us
+            Start Your Next Move
           </p>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0A192F] leading-tight">
-            Your Local Real Estate
-            <br className="hidden sm:block" /> Resource Network
+            A Clear Path to
+            <br className="hidden sm:block" /> Buying, Selling, or Investing
           </h2>
         </motion.div>
 
@@ -65,6 +70,7 @@ export default function TrustSection() {
               <p className="font-body text-[#0A192F]/60 group-hover:text-white/70 text-base leading-relaxed transition-colors duration-500">
                 {block.desc}
               </p>
+              <Link to={block.to} className="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-[#0A192F] group-hover:text-[#C5A059]">{block.action}<ArrowRight size={16} /></Link>
               <div className="absolute bottom-0 left-8 right-8 h-px bg-[#C5A059] scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left" />
             </motion.div>
           ))}

@@ -29,10 +29,6 @@ export default function HeroSection() {
     navigate(`/homes?${params}`);
   };
 
-  const scrollTo = (id) => {
-    const el = document.querySelector(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
@@ -60,7 +56,7 @@ export default function HeroSection() {
             transition={{ duration: 0.6 }}
             className="text-[#C5A059] font-body text-sm font-semibold tracking-[0.2em] uppercase mb-4"
           >
-            North Houston's Trusted Resource
+            Buy, Sell & Invest in North Houston
           </motion.p>
 
           <motion.h1
@@ -82,7 +78,7 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="text-white/80 font-body text-lg md:text-xl leading-relaxed mb-4 max-w-xl"
           >
-            Buy, Sell, Invest, and Connect with Trusted Local Professionals Across North Houston.
+            Find your next home, plan your sale, or explore a rental-property investment.
           </motion.p>
 
           <motion.p
@@ -91,7 +87,7 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-white/60 font-body text-base leading-relaxed mb-8 max-w-xl"
           >
-            Whether you're looking for your next home, preparing to sell, relocating to Texas, or searching for trusted local service providers, Homes Around North Houston connects you with the resources and professionals you need.
+            Search homes across North Houston and talk with Golden Cross Realty about buying, selling, or investing in rental properties. Start with the properties, neighborhoods, and market information that fit your goals.
           </motion.p>
 
           <motion.div
@@ -108,12 +104,13 @@ export default function HeroSection() {
               Search Homes
             </button>
             <button
-              onClick={() => scrollTo("#sellers")}
+              onClick={() => navigate("/?interest=selling#contact")}
               className="px-8 py-3.5 border-2 border-white/30 text-white font-body font-semibold text-base rounded hover:border-[#C5A059] hover:text-[#C5A059] transition-all duration-300 flex items-center gap-2"
             >
               <DollarSign className="w-4 h-4" />
-              Get Home Value
+              Request Home Value Analysis
             </button>
+            <button onClick={() => navigate("/?interest=investing#contact")} className="text-white/85 underline underline-offset-4 font-body text-sm hover:text-[#C5A059]">Explore Rental Property Investing</button>
           </motion.div>
         </div>
 
