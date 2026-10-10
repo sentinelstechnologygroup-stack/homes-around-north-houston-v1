@@ -12,7 +12,7 @@ const columns = [
   {
     icon: Handshake,
     title: "Connected Resources",
-    desc: "Golden Marketing Services brings home search and local resources together; Golden Cross Realty provides the brokerage services.",
+    desc: "GMS Pro brings home search and local resources together; Golden Cross Realty provides the brokerage services.",
   },
   {
     icon: LayoutGrid,

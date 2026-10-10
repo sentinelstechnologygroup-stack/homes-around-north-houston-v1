@@ -42,7 +42,7 @@ export default function LocalServicesSection() {
           className="text-center mb-6"
         >
           <p className="text-[#C5A059] font-body text-sm font-semibold tracking-[0.2em] uppercase mb-3">
-            Golden Marketing Services
+            GMS Pro
           </p>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0A192F] mb-4">
             Local Homeowner Resources

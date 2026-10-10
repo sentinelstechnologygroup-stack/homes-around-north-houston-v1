@@ -22,7 +22,7 @@ const blocks = [
   {
     icon: Users,
     title: "Local Resources",
-    desc: "Explore home-service categories on this Golden Marketing Services-powered website.",
+    desc: "Explore home-service categories on this GMS Pro-powered website.",
   },
 ];
 

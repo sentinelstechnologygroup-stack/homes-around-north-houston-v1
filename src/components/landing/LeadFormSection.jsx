@@ -184,7 +184,7 @@ ${form.message || "No message provided."}`
                 <Send className="w-4 h-4" />
                 Prepare Email to Golden Cross Realty
               </button>
-              <p className="text-sm text-[#0A192F]/75 leading-relaxed">This form opens your email application with a draft to Golden Cross Realty. Review and send the email to submit your inquiry. Golden Marketing Services supplies the website technology.</p>
+              <p className="text-sm text-[#0A192F]/75 leading-relaxed">This form opens your email application with a draft to Golden Cross Realty. Review and send the email to submit your inquiry. GMS Pro supplies the website technology.</p>
             </form>
           </motion.div>
         </div>
