@@ -40,7 +40,7 @@ export default function BuyersSection() {
             </div>
             {/* Floating stat */}
             <div className="absolute -bottom-6 -right-4 lg:-right-8 bg-[#0A192F] text-white p-6 rounded-xl shadow-2xl">
-              <p className="text-[#C5A059] font-display text-3xl font-semibold">HAR IDX</p>
+              <p className="text-[#C5A059] font-display text-3xl font-semibold">Find Your Home</p>
               <p className="font-body text-white/70 text-sm">Explore Current Listings</p>
             </div>
           </motion.div>

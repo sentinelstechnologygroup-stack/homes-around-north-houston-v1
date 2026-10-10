@@ -10,7 +10,7 @@ export default function Legal({type}){
  ['Privacy questions','Contact Golden Cross Realty using the email below to ask about information you have sent or request a correction. Do not include financial account details or other sensitive documents in this inquiry form.']
  ]:[
  ['Technology and brokerage services',TECHNOLOGY_DISCLOSURE],
- ['Property information','HAR supplies the IDX search and listing details. IDX information is intended for consumers’ personal, non-commercial use to identify properties they may be interested in purchasing. Information is deemed reliable but not guaranteed; independently verify price, availability, dimensions, school assignments, and other details.'],
+ ['Property information','The Houston Association of REALTORS® (HAR) supplies home search and listing details. Listing information is intended for consumers’ personal, non-commercial use to identify properties they may be interested in purchasing. Information is deemed reliable but not guaranteed; independently verify price, availability, dimensions, school assignments, and other details.'],
  ['Market information','Published market reports describe a particular reporting period and geography. A comparative market analysis is not an appraisal, and no market report guarantees a transaction outcome.'],
  ['Independent service providers','Local resource categories are informational. Consumers should independently check a provider’s licensing, insurance, qualifications, availability, and terms before engaging them.'],
  ['Representation and fair housing','Using this website or sending an inquiry does not by itself establish a brokerage representation agreement. Discuss representation directly with Golden Cross Realty. Equal Housing Opportunity.']
