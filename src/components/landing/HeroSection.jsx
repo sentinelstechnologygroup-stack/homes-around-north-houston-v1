@@ -87,7 +87,7 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-white/60 font-body text-base leading-relaxed mb-8 max-w-xl"
           >
-            Search homes across North Houston and talk with Golden Cross Realty about buying, selling, or investment properties. Start with the properties, neighborhoods, and market information that fit your goals.
+            Search homes across North Houston and talk with Golden Cross Realty about buying, selling, or exploring investment properties. Start with the properties, neighborhoods, and market information that fit your goals.
           </motion.p>
 
           <motion.div
