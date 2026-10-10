@@ -1,5 +1,6 @@
 export function captureLeadAttribution() {
-  const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  if (typeof window === 'undefined') return {};
+  const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid'];
   const params = new URLSearchParams(window.location.search);
   let saved = {};
   try { saved = JSON.parse(sessionStorage.getItem('north-houston-source') || '{}'); } catch { /* Tracking remains optional. */ }

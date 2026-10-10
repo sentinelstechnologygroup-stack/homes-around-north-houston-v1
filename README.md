@@ -1,6 +1,6 @@
 # Homes Around North Houston
 
-Vite/React website for Homes Around North Houston / Golden Cross Realty, with website technology supplied by GMS Pro.
+Vite/React website for Homes Around North Houston / Golden Cross Realty, with website technology supplied by Golden Marketing Services.
 
 ## Development and checks
 
@@ -14,12 +14,13 @@ npm run typecheck
 
 ## Routes
 
-- `/`: home, buyer/seller guidance, investment properties, communities, and GMS inquiry.
+- `/`: home, buyer/seller guidance, investment properties, communities, and email inquiry.
+- `/buy`, `/sell`, `/investment-properties`: dedicated intent landing pages.
 - `/homes`: Golden Cross Realty's existing HAR IDX search, account identifier 605032.
 - `/market-reports`: links to HAR's published reports and local-analysis requests.
 - `/privacy` and `/terms`: disclosures describing the implemented website behavior.
 
-Vercel's SPA rewrite supports direct navigation and refreshes on these routes. Images and video remain under `public/`.
+The build prerenders each known route with its own metadata and initial HTML, plus robots/sitemap/404 files. Vercel maps known routes to their HTML and returns 404 for unknown paths. Images and video remain under `public/`.
 
 ## Branding, disclosures, and IDX
 
@@ -35,8 +36,12 @@ HAR search is embedded directly, preserving HAR's listing attribution and presen
 
 ## Operational limitations
 
-- The GMS intake change is prepared locally pending campaign configuration and launch readiness. Production remains on its prior form until the new route is ready. See `docs/gms-lead-routing.md`.
+- This branch prepares GMS intake pending an approved campaign and readiness. Production continues using its email-draft form until intake is activated. See `docs/gms-lead-routing.md`.
 - Market reports link to HAR's published source, not a live statistical API. Old unsourced market figures, inventory counts, uplift claims, and unverified testimonials were removed.
 - Business-networking and local-service directories have been removed. The inquiry supports buying, selling, investment properties, and buying/selling together.
 - The existing Golden Cross IABS is reused; the broker remains responsible for keeping its details current.
 - The Vercel project currently lists Vercel aliases. Custom-domain cutover and multi-customer Repliers/vendor licensing are separate work.
+
+## SEO, security and PPC readiness
+
+See `docs/hardening-and-conversion-plan.md`. Run `node --test scripts/site-hardening.test.mjs` after building. `src/lib/seo.js` controls the canonical host and route metadata. Update the host and run `node scripts/security-config.mjs` when the custom domain is connected; the CSP hash must match the emitted structured data. External ad/analytics tags are intentionally disabled until accounts and consent configuration are verified.

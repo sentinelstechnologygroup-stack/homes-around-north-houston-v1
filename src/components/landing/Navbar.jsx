@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-const links = [['Home','/'],['Buy','/#buyers'],['Sell','/#sellers'],['Invest','/#investing'],['Market Reports','/market-reports']];
+const links = [['Home','/'],['Buy','/buy'],['Sell','/sell'],['Invest','/investment-properties'],['Market Reports','/market-reports']];
 export default function Navbar() {
   const [open,setOpen] = useState(false);
   return <nav aria-label="Main navigation" className="fixed top-0 inset-x-0 z-50 bg-[#0A192F]/95 backdrop-blur-xl shadow-lg">

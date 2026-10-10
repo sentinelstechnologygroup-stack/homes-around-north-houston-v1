@@ -1,0 +1,18 @@
+export const SITE_ORIGIN = 'https://homes-around-north-houston-v1.vercel.app';
+export const pages = {
+  '/': { title: 'North Houston Homes for Sale | Golden Cross Realty', description: 'Search North Houston homes, plan your home sale, and explore investment properties with Golden Cross Realty. Serving Conroe, The Woodlands, Spring and nearby communities.' },
+  '/buy': { title: 'Buy a Home in North Houston | Golden Cross Realty', description: 'Explore homes for sale in North Houston and discuss your preferred area, purchase budget and timeline with Golden Cross Realty.' },
+  '/sell': { title: 'Sell Your North Houston Home | Home Value Analysis', description: 'Request a comparative market analysis and discuss pricing, preparation and your selling timeline with Golden Cross Realty.' },
+  '/investment-properties': { title: 'North Houston Investment Properties | Golden Cross Realty', description: 'Explore North Houston investment properties and discuss purchase priorities, property condition and due diligence with Golden Cross Realty.' },
+  '/homes': { title: 'Search North Houston Homes for Sale | Golden Cross Realty', description: 'Browse available North Houston homes by city, neighborhood and budget using Golden Cross Realty’s HAR property search.' },
+  '/market-reports': { title: 'North Houston Real Estate Market Reports', description: 'Explore published Houston housing reports and request a neighborhood or property analysis from Golden Cross Realty.' },
+  '/privacy': { title: 'Privacy Policy | Homes Around North Houston', description: 'How Homes Around North Houston handles inquiries and third-party property search services.' },
+  '/terms': { title: 'Terms & Disclosures | Homes Around North Houston', description: 'Brokerage, technology, property information and fair housing disclosures for Homes Around North Houston.' },
+};
+export function pageMetadata(path) {
+  return pages[path] || { title: 'Page Not Found | Homes Around North Houston', description: 'This page could not be found. Explore North Houston homes and real estate guidance.', noindex: true };
+}
+export const structuredData = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
+  { '@type': 'WebSite', '@id': `${SITE_ORIGIN}/#website`, name: 'Homes Around North Houston', url: `${SITE_ORIGIN}/`, publisher: { '@id': `${SITE_ORIGIN}/#brokerage` } },
+  { '@type': 'RealEstateAgent', '@id': `${SITE_ORIGIN}/#brokerage`, name: 'Golden Cross Realty', url: 'https://goldencrossrealty.net/', telephone: '+19365370568', areaServed: 'North Houston, Texas' },
+] });

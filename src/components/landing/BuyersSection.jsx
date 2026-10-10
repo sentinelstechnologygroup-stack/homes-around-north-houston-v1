@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Search, MapPin, GraduationCap, Landmark, Truck, ArrowRight } from "lucide-react";
 import SectionDivider from "./SectionDivider";
 
-const BUYERS_IMG = "/images/buyers/luxury-home-interior.png";
+const BUYERS_IMG = "/images/buyers/luxury-home-interior.webp";
 
 const features = [
   { icon: Search, label: "Home Search Tools" },
@@ -31,6 +31,7 @@ export default function BuyersSection() {
           >
             <div className="relative rounded-xl overflow-hidden">
               <img
+                loading="lazy" decoding="async"
                 src={BUYERS_IMG}
                 alt="Luxury home interior for buyers"
                 className="w-full aspect-[4/3] object-cover"

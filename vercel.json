@@ -1,3 +1,59 @@
 {
-  "rewrites": [{ "source": "/((?!api(?:/|$)|.*\\.).*)", "destination": "/index.html" }]
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'sha256-XKBObhrkcUSkhAy6QzIyMLYZNka+Hm10koMeHm5C5O0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; frame-src https://www.har.com https://har.com; object-src 'none'; base-uri 'self'; form-action 'self' mailto:; frame-ancestors 'none'; upgrade-insecure-requests"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=()"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/buy",
+      "destination": "/buy/index.html"
+    },
+    {
+      "source": "/sell",
+      "destination": "/sell/index.html"
+    },
+    {
+      "source": "/investment-properties",
+      "destination": "/investment-properties/index.html"
+    },
+    {
+      "source": "/homes",
+      "destination": "/homes/index.html"
+    },
+    {
+      "source": "/market-reports",
+      "destination": "/market-reports/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms/index.html"
+    }
+  ]
 }

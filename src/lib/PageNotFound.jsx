@@ -5,7 +5,7 @@ export default function PageNotFound() {
   const pageName = location.pathname.substring(1) || 'unknown'
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
       <div className="max-w-md w-full">
         <div className="text-center space-y-6">
           <div className="space-y-2">
@@ -33,6 +33,6 @@ export default function PageNotFound() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
