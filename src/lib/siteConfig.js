@@ -17,3 +17,7 @@ export function buildHarSearchUrl({ city = "", zip = "", neighborhood = "", minP
   if (maxPrice) params.set("listing_price_max", maxPrice);
   return `https://www.har.com/idx/mls/listing?${params.toString()}`;
 }
+
+// Update this source attribution when the approved listing feed changes.
+export const LISTING_DATA_PROVIDER = "Houston Association of REALTORS® (HAR)";
+export const PROPERTY_INFORMATION_DISCLOSURE = `Property search features are provided by GMS Pro and its IDX technology partners. Listing data is supplied by the ${LISTING_DATA_PROVIDER}. Information is for consumers’ personal, non-commercial use to identify properties they may wish to purchase. Information is deemed reliable but not guaranteed and should be independently verified.`;

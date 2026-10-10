@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
-import { BROKERAGE, TECHNOLOGY_DISCLOSURE } from "@/lib/siteConfig";
+import { BROKERAGE, TECHNOLOGY_DISCLOSURE, PROPERTY_INFORMATION_DISCLOSURE } from "@/lib/siteConfig";
 
 const links = [
   ["Search Homes", "/homes"],
@@ -59,7 +59,7 @@ export default function Footer() {
           </section>
           <section aria-labelledby="footer-data">
             <h2 id="footer-data" className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90 mb-3">Property Information</h2>
-            <p className="text-sm text-white/70 leading-relaxed">Listing data and home search are supplied by the Houston Association of REALTORS® (HAR) through Golden Cross Realty’s property-search service. Information is for consumers’ personal, non-commercial use to identify properties they may wish to purchase. Information is deemed reliable but not guaranteed and should be independently verified.</p>
+            <p className="text-sm text-white/70 leading-relaxed">{PROPERTY_INFORMATION_DISCLOSURE}</p>
           </section>
         </div>
 

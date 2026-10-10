@@ -59,3 +59,7 @@ Build, lint, typecheck, dependency audits and three prerender/security checks. B
 - Vercel security headers: https://vercel.com/docs/cdn-security/security-headers
 - Vercel rate limiting: https://vercel.com/kb/guide/add-rate-limiting-vercel
 - Tailwind upgrade guidance: https://tailwindcss.com/docs/upgrade-guide
+
+## October 10 IDX launch direction
+
+Patrick confirmed that the launched website will use Repliers for IDX search. Complete the approved Repliers/HAR feed integration and required display attribution before domain launch. Current production still uses the existing HAR embed. Footer search-tool credit now identifies GMS Pro and its IDX technology partners separately from the listing-data provider. This wording does not represent Repliers as already connected or authorize data reuse for other brokers; each client’s brokerage/disclosures and approved feed configuration remain specific to that site.
