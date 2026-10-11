@@ -1,3 +1,4 @@
+import { WEEKLY_LISTING_EMAIL_LABEL } from '@/lib/listingEmailPreference';
 import React, { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Send, CheckCircle } from "lucide-react"
@@ -29,7 +30,7 @@ export default function LeadFormSection() {
     interested_in: "",
     message: "",
     area: "", budgetRange: "", timeline: "", workingWithAgent: "",
-    consentAccepted: false, website_check: "",
+    consentAccepted: false, website_check: "", weeklyListingEmailsRequested: true,
   })
   const submissionId = useRef(null)
   const [submitted, setSubmitted] = useState(false)
@@ -54,6 +55,7 @@ export default function LeadFormSection() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           submissionId: submissionId.current, name: form.name, email: form.email, phone: form.phone, interested_in: form.interested_in,
+          weeklyListingEmailsRequested: form.weeklyListingEmailsRequested, weeklyListingPreferencePresented: step === 2,
           message: form.message, website_check: form.website_check, formStartedAt,
           consentAccepted: form.consentAccepted, consentVersion: CONTACT_CONSENT_VERSION,
           funnelProfile: { area: form.area, budgetRange: form.budgetRange, timeline: form.timeline, workingWithAgent: form.workingWithAgent },
@@ -207,6 +209,7 @@ export default function LeadFormSection() {
                 ].map(([field, label, placeholder]) => <label key={field} className="block text-sm font-medium text-[#0A192F]">{label}<input aria-label={label} value={form[field]} onChange={e => update(field, e.target.value)} placeholder={placeholder} maxLength={200} className="mt-2 w-full px-4 py-3 rounded-lg border border-[#0A192F]/10" /></label>)}
                 <label className="block text-sm font-medium text-[#0A192F]">When are you planning to move or purchase?<select aria-label="Timeline" value={form.timeline} onChange={e => update("timeline", e.target.value)} className="mt-2 w-full px-4 py-3 rounded-lg border border-[#0A192F]/10"><option value="">Select a timeframe (optional)</option>{["Within 3 months", "3–6 months", "6–12 months", "Just exploring"].map(value => <option key={value}>{value}</option>)}</select></label>
                 <label className="block text-sm font-medium text-[#0A192F]">Are you already working with a real estate agent?<select aria-label="Working with an agent" value={form.workingWithAgent} onChange={e => update("workingWithAgent", e.target.value)} className="mt-2 w-full px-4 py-3 rounded-lg border border-[#0A192F]/10"><option value="">Select an answer (optional)</option><option value="yes">Yes</option><option value="no">No</option><option value="unsure">Not sure</option></select></label>
+              <label className="flex items-start gap-3 text-sm text-[#0A192F]/75 leading-relaxed"><input type="checkbox" checked={form.weeklyListingEmailsRequested} onChange={e => update("weeklyListingEmailsRequested", e.target.checked)} className="mt-1" />{WEEKLY_LISTING_EMAIL_LABEL}</label>
               <div>
                 <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Message</label>
                 <textarea

@@ -57,6 +57,8 @@ export default async function handler(req, res) {
   const attribution = { sourceSite: 'homes-around-north-houston', channel: 'website', provider: 'GMS Pro', inquiryType: body.interested_in };
   for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid']) attribution[key] = clean(body.attribution?.[key], 200);
   const lead = {
+    weeklyListingPreferencePresented: body.weeklyListingPreferencePresented === true,
+    weeklyListingEmailsRequested: body.weeklyListingPreferencePresented === true && body.weeklyListingEmailsRequested === true,
     submissionId, name, email, phone: digits.length === 10 ? `+1${digits}` : `+${digits}`, market: clean(goals.area, 200) || 'North Houston',
     services: [interest], sources: ['Homes Around North Houston website'],
     notes: `Interest: ${interest}\n${clean(body.message, 2000)}`,
