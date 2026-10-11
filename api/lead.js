@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { CONTACT_CONSENT_TEXT, CONTACT_CONSENT_VERSION } from '../src/lib/contactConsent.js';
 
 const clean = (value, max = 200) => typeof value === 'string' ? value.trim().slice(0, max) : '';
@@ -33,6 +34,8 @@ export default async function handler(req, res) {
   }
   if (!body || typeof body !== 'object' || JSON.stringify(body).length > 20000) return res.status(400).json({ error: 'Invalid request' });
   if (clean(body.website_check)) return res.status(400).json({ error: 'Invalid request' });
+  const submissionId = clean(body.submissionId, 80);
+  if (!/^[a-f0-9-]{36}$/i.test(submissionId)) return res.status(400).json({ error: 'Please reload the page and try again.' });
   const name = clean(body.name, 120);
   const email = clean(body.email, 254).toLowerCase();
   const phone = clean(body.phone, 40);
@@ -54,7 +57,7 @@ export default async function handler(req, res) {
   const attribution = { sourceSite: 'homes-around-north-houston', channel: 'website', provider: 'GMS Pro', inquiryType: body.interested_in };
   for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid']) attribution[key] = clean(body.attribution?.[key], 200);
   const lead = {
-    name, email, phone, market: clean(goals.area, 200) || 'North Houston',
+    submissionId, name, email, phone: digits.length === 10 ? `+1${digits}` : `+${digits}`, market: clean(goals.area, 200) || 'North Houston',
     services: [interest], sources: ['Homes Around North Houston website'],
     notes: `Interest: ${interest}\n${clean(body.message, 2000)}`,
     pageUrl: `${req.headers.origin}/`, submittedAt: now, attribution,
@@ -67,7 +70,7 @@ export default async function handler(req, res) {
   };
   try {
     const upstream = await fetch(webhook, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-gms-route-key': route },
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-gms-route-key': route, 'idempotency-key': createHash('sha256').update(`${route}:${submissionId}`).digest('hex') },
       body: JSON.stringify(lead), signal: AbortSignal.timeout(12000),
     });
     if (upstream.status === 409 || upstream.status === 404) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });

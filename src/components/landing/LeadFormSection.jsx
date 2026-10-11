@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Send, CheckCircle } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
@@ -31,6 +31,7 @@ export default function LeadFormSection() {
     area: "", budgetRange: "", timeline: "", workingWithAgent: "",
     consentAccepted: false, website_check: "",
   })
+  const submissionId = useRef(null)
   const [submitted, setSubmitted] = useState(false)
   const [step, setStep] = useState(1)
   const [sending, setSending] = useState(false)
@@ -45,13 +46,14 @@ export default function LeadFormSection() {
     e.preventDefault()
     if (sending) return
     if (step === 1) { setStep(2); return }
+    submissionId.current ||= crypto.randomUUID()
     setSending(true)
     setError("")
     try {
       const response = await fetch("/api/lead", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name, email: form.email, phone: form.phone, interested_in: form.interested_in,
+          submissionId: submissionId.current, name: form.name, email: form.email, phone: form.phone, interested_in: form.interested_in,
           message: form.message, website_check: form.website_check, formStartedAt,
           consentAccepted: form.consentAccepted, consentVersion: CONTACT_CONSENT_VERSION,
           funnelProfile: { area: form.area, budgetRange: form.budgetRange, timeline: form.timeline, workingWithAgent: form.workingWithAgent },
