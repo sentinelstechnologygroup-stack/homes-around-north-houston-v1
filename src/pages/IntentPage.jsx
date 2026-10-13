@@ -18,7 +18,7 @@ const content = {
     title: 'Explore North Houston Investment Properties', intro: 'Whether you are considering your first investment property or adding to a portfolio, start with a clear purchase budget and the areas you want to explore.',
     action: 'Discuss Investment Properties', heading: 'Compare the property and the responsibilities',
     points: ['Identify your intended use, purchase budget and preferred ownership timeline.', 'Review available homes and verify property condition, restrictions, taxes and insurance considerations.', 'Discuss due diligence with Golden Cross Realty and consult appropriate financing, tax and legal professionals for your plans.'],
-    note: 'Property performance varies. No rental income, return, appreciation or investment outcome is guaranteed.',
+    note: 'Property performance varies. No income, return, appreciation or investment outcome is guaranteed.',
   },
 };
 export default function IntentPage({ interest }) {
