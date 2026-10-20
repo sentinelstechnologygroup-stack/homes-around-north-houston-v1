@@ -212,6 +212,7 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
               className="bg-white rounded-2xl p-6 md:p-8 space-y-5"
             >
               <p className="text-sm font-semibold text-[#0A192F]" aria-live="polite">Step {step} of 2 · {step === 1 ? "Your contact details" : "Your area of interest"}</p>
+              {import.meta.env.VITE_CONTROLLED_INTAKE_PREVIEW === 'true' && <p role="note" className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">Controlled preview test: use the designated test email. Test inquiries appear in the Agent Portal; calls and SMS are disabled.</p>}
               {step === 1 && <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {[["firstName", "First name"], ["lastName", "Last name"]].map(([field, label]) => <label key={field} className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">{label} *

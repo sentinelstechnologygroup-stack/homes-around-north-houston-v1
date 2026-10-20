@@ -24,6 +24,14 @@ test('property inquiries preserve preferences and attribution through the server
     assert.equal(forwarded.body.funnelProfile.beds,'3');assert.equal(forwarded.body.weeklyListingEmailsRequested,false);assert.equal(forwarded.body.consent.smsAccepted,false);
     assert.equal((await invoke({body:{sessionId:'a'.repeat(64),sessionToken:'b'.repeat(64),funnelAction:'complete',funnelProfile:{location:'77304',beds:'3',maxPrice:'400000',weeklyListingPreferencePresented:true,weeklyListingEmailsRequested:false,tenantId:'forged'}}})).code,202);
     assert.equal(forwarded.body.funnelProfile.beds,'3');assert.equal(forwarded.body.funnelProfile.tenantId,undefined);
+    process.env.GMS_INTAKE_TEST_ONLY='true';
+    assert.equal((await invoke()).code,202);
+    assert.equal(forwarded.body.isTest,true);
+    assert.equal(forwarded.headers['x-gms-preview-origin'],'https://review.vercel.app');
+    process.env.VERCEL_ENV='production';
+    process.env.ALLOWED_ORIGINS='https://review.vercel.app';
+    assert.equal((await invoke()).code,503);
+    process.env.VERCEL_ENV='preview';delete process.env.GMS_INTAKE_TEST_ONLY;delete process.env.ALLOWED_ORIGINS;
     upstreamStatus=409;assert.equal((await invoke()).code,503);
     upstreamStatus=200;accepted=false;assert.equal((await invoke()).code,502);
   }finally{global.fetch=originalFetch;for(const key of Object.keys(process.env))if(!(key in previous))delete process.env[key];Object.assign(process.env,previous);}

@@ -5,6 +5,7 @@ const clean = (value, max = 200) => typeof value === 'string' ? value.trim().sli
 const interests = { buying: 'Buying', selling: 'Selling', investing: 'Investment Properties', buying_and_selling: 'Buying & Selling' };
 // Best-effort per-instance throttling; configure platform rate limits before launch.
 const attempts = new Map();
+export const config = { maxDuration: 120 };
 function throttled(req) {
   let input = req.body;
   if (typeof input === 'string') { try { input = JSON.parse(input) } catch { input = {} } }
@@ -46,7 +47,7 @@ export default async function handler(req, res) {
     funnelProfile.message = clean(goals.message, 2000);
     funnelProfile.weeklyListingPreferencePresented = goals.weeklyListingPreferencePresented === true;
     funnelProfile.weeklyListingEmailsRequested = goals.weeklyListingPreferencePresented === true && goals.weeklyListingEmailsRequested === true;
-    return forward({ funnelAction: body.funnelAction, sessionId: body.sessionId, sessionToken: body.sessionToken, funnelProfile, funnelTelemetry: body.funnelTelemetry }, res);
+    return forward({ funnelAction: body.funnelAction, sessionId: body.sessionId, sessionToken: body.sessionToken, funnelProfile, funnelTelemetry: body.funnelTelemetry }, res, req.headers.origin);
   }
   const submissionId = clean(body.submissionId, 80);
   if (!/^[a-f0-9-]{36}$/i.test(submissionId)) return res.status(400).json({ error: 'Please reload the page and try again.' });
@@ -86,23 +87,28 @@ export default async function handler(req, res) {
     },
   };
   if (body.funnelAction === 'capture') { lead.funnelAction = 'capture'; lead.funnelTelemetry = body.funnelTelemetry; }
-  return forward(lead, res);
+  return forward(lead, res, req.headers.origin);
 }
 
-async function forward(lead, res) {
+async function forward(lead, res, origin) {
   const webhook = process.env.LEAD_WEBHOOK_URL;
   const token = process.env.LEAD_WEBHOOK_TOKEN;
   const route = process.env.GMS_LEAD_ROUTE_KEY;
   if (!webhook || !token || !route) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });
   // Only server configuration can enable fixtures; a browser test flag is ignored.
-  if (process.env.GMS_INTAKE_TEST_ONLY === 'true') lead.isTest = true;
+  const controlledPreview = process.env.GMS_INTAKE_TEST_ONLY === 'true' && process.env.VERCEL_ENV === 'preview';
+  if (process.env.GMS_INTAKE_TEST_ONLY === 'true') {
+    if (!controlledPreview) return res.status(503).json({ error: 'Controlled intake is available only in the preview.' });
+    lead.isTest = true;
+  }
   try {
     const upstream = await fetch(webhook, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-gms-route-key': route, 'idempotency-key': createHash('sha256').update(`${route}:${lead.submissionId || lead.sessionId}`).digest('hex') },
-      body: JSON.stringify(lead), signal: AbortSignal.timeout(12000),
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-gms-route-key': route, ...(controlledPreview ? {'x-gms-preview-origin': origin} : {}), 'idempotency-key': createHash('sha256').update(`${route}:${lead.submissionId || lead.sessionId}`).digest('hex') },
+      body: JSON.stringify(lead), signal: AbortSignal.timeout(controlledPreview ? 105000 : 12000),
     });
     if (upstream.status === 409 || upstream.status === 404) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });
     const result = await upstream.json().catch(() => ({}));
+    if (controlledPreview && upstream.status === 403) return res.status(403).json({ error: 'Controlled preview: use the designated test email. This test may also have expired.' });
     if (!upstream.ok || result.accepted !== true || !result.leadId) throw new Error('Intake not confirmed');
     return res.status(202).json({ accepted: true, reference: result.leadId,
       ...(lead.funnelAction ? { sessionId: result.sessionId, sessionToken: result.sessionToken, state: result.state } : {}) });
