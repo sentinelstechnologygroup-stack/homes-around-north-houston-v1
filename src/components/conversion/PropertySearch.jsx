@@ -11,7 +11,7 @@ async function request(params,signal){const r=await fetch('/api/idx?'+new URLSea
 export default function PropertySearch({ compact=false,searchPath='/mls-search' }){
   const [params,setParams]=useSearchParams(),route=useParams(),navigate=useNavigate();
   const initial=Object.fromEntries(searchKeys.map(key=>[key,params.get(key)||empty[key]]));
-  if(params.get('city'))initial.location=params.get('city');if(params.get('zip'))initial.location=params.get('zip');
+  if(!params.get('location')){if(params.get('city'))initial.location=params.get('city');if(params.get('zip'))initial.location=params.get('zip');}
   const [form,setForm]=useState(initial),[filters,setFilters]=useState(initial),[config,setConfig]=useState(null),[result,setResult]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
   const [page,setPage]=useState(1),[sort,setSort]=useState('updatedOnDesc'),[bounds,setBounds]=useState(''),[saved,setSaved]=useState(readHomes),[searches,setSearches]=useState(readSearches),[view,setView]=useState('all'),[notice,setNotice]=useState(''),[weekly,setWeekly]=useState(false);
   const title=useRef(null);
@@ -30,7 +30,7 @@ export default function PropertySearch({ compact=false,searchPath='/mls-search' 
     return()=>c.abort();
   },[config,filterKey,page,sort,view,savedKey,detailMode,route.boardId,route.mlsNumber]);
   useEffect(()=>{try{const incoming=Object.fromEntries(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','gbraid','wbraid','fbclid'].filter(k=>params.has(k)).map(k=>[k,params.get(k).slice(0,200)]));if(Object.keys(incoming).length)sessionStorage.setItem('property-search-attribution',JSON.stringify(incoming));}catch{/* Search never depends on tracking. */}},[params]);
-  function apply(next){setForm(next);setFilters(next);setPage(1);setView('all');setWeekly(false);const query=new URLSearchParams(params);for(const k of searchKeys.concat('bounds'))query.delete(k);for(const [k,v] of Object.entries(next))if(v && v!=='false')query.set(k,v);setParams(query,{replace:true});}
+  function apply(next){setForm(next);setFilters(next);setPage(1);setView('all');setWeekly(false);const query=new URLSearchParams(params);for(const k of searchKeys.concat('bounds','city','zip','listing_price_min','listing_price_max','bedroom_min','full_bath_min','property_class_id','stype'))query.delete(k);for(const [k,v] of Object.entries(next))if(v && v!=='false')query.set(k,v);setParams(query,{replace:true});}
   function toggleHome(listing){const id=listing.boardId+':'+listing.mlsNumber;const next=saved.includes(id)?saved.filter(x=>x!==id):[id,...saved].slice(0,50);try{saveHomes(next);setSaved(next);setNotice(next.includes(id)?'Home saved on this device.':'Home removed from saved homes.');}catch{setNotice('This browser cannot save homes. Enable site storage to use this feature.');}}
   function saveSearch(){const next=[{name:(filters.location||'Map area')+' · '+(filters.maxPrice?money(filters.maxPrice)+' max':'Any price'),filters},...searches].slice(0,10);try{saveSearches(next);setSearches(next);setNotice('Search saved on this device.');}catch{setNotice('This browser cannot save searches.');}}
   function open(listing){navigate(`/property/${listing.boardId}/${listing.mlsNumber}?${params}`);}

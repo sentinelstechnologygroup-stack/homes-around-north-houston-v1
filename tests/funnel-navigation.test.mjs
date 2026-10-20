@@ -4,11 +4,11 @@ import { campaignDefaults, resultsUrl, searchInquiryUrl } from '../src/lib/funne
 import { CONTACT_CONSENT_TEXT } from '../src/lib/contactConsent.js';
 
 test('a search inquiry and return to results preserve filters and campaign attribution',()=>{
- const url=searchInquiryUrl({location:'77304',maxPrice:'400000',beds:'3',baths:'2'},null,'utm_source=meta&utm_campaign=conroe');
+ const url=searchInquiryUrl({location:'77304',maxPrice:'400000',beds:'3',baths:'2'},null,'utm_source=meta&utm_campaign=conroe&city=OldCity&zip=99999');
  const incoming=new URL(url,'https://example.invalid');
  assert.equal(incoming.pathname,'/homes');assert.equal(incoming.hash,'#contact');
  const defaults=campaignDefaults(incoming.searchParams);
- assert.equal(defaults.zip,'77304');assert.equal(defaults.beds,'3');assert.equal(defaults.maxPrice,'400000');
+ assert.equal(defaults.city,'');assert.equal(defaults.zip,'77304');assert.equal(defaults.beds,'3');assert.equal(defaults.maxPrice,'400000');
  const results=new URL(resultsUrl(defaults,incoming.searchParams.toString()),incoming.origin);
  assert.equal(results.pathname,'/homes');assert.equal(results.searchParams.get('beds'),'3');assert.equal(results.searchParams.get('utm_source'),'meta');assert.equal(results.hash,'');
  assert.equal(results.searchParams.has('inquiryContext'),false);

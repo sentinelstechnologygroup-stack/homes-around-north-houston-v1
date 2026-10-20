@@ -38,6 +38,7 @@ export function funnelEvent(name, detail = {}) {
 
 export function searchInquiryUrl(filters = {}, property = null, current = '') {
   const query = new URLSearchParams(current);
+  if(filters.location) for(const key of ['city','zip','neighborhood']) query.delete(key);
   for (const [key,value] of Object.entries(filters)) if (value) query.set(key,String(value));
   query.set('inquiryContext','search');
   if(property){ query.set('boardId',property.boardId);query.set('mlsNumber',property.mlsNumber);query.set('propertyAddress',property.address); }
