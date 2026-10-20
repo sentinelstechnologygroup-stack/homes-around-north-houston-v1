@@ -8,14 +8,15 @@ import PageShell from "@/components/PageShell";
 import { HAR_SEARCH, buildHarSearchUrl } from "@/lib/siteConfig";
 export default function Homes() {
   const [params] = useSearchParams();
-  const [previewEnabled, setPreviewEnabled] = useState(false);
+  const [previewEnabled, setPreviewEnabled] = useState(null);
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/idx?action=config', { signal: controller.signal }).then(response => response.ok ? response.json() : null).then(config => setPreviewEnabled(config?.enabled === true)).catch(() => {});
+    fetch('/api/idx?action=config', { signal: controller.signal }).then(response => response.ok ? response.json() : null).then(config => setPreviewEnabled(config?.enabled === true)).catch(error => { if (error.name !== "AbortError") setPreviewEnabled(false); });
     return () => controller.abort();
   }, []);
   const keys = ["city", "zip", "neighborhood", "minPrice", "maxPrice"];
   const src = keys.some(key => params.get(key)) ? buildHarSearchUrl(Object.fromEntries(keys.map(key => [key, params.get(key) || ""]))) : HAR_SEARCH;
+  if (previewEnabled === null) return <><Navbar /><main id="main-content" className="pt-24 property-search"><header className="ps-hero"><p className="ps-eyebrow">GOLDEN CROSS REALTY</p><h1>Find your North Houston home.</h1><p role="status">Loading home search…</p></header></main><Footer /></>;
   if (previewEnabled) return <><Navbar /><main id="main-content" className="pt-24"><PropertySearch compact searchPath="/homes" /></main><Footer /></>;
   return <PageShell title="Search North Houston Homes" intro="Find your next home in North Houston. Narrow your search by location, price, and the features that matter to you.">
     {previewEnabled && <PropertySearchPreview />}
@@ -24,3 +25,4 @@ export default function Homes() {
     <p className="mt-4 text-sm text-[#0A192F]/75">If home search does not load, open it in a new tab using the link above.</p>
   </PageShell>;
 }
+
