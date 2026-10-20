@@ -22,7 +22,7 @@ export default function PropertySearch({ compact=false,searchPath='/mls-search' 
   const [accountRequest,setAccountRequest]=useState(0),[pending,setPending]=useState(null);
   const title=useRef(null);
   const [user,setUser]=useState(null);
-  useEffect(()=>watchAccount(setUser),[]);
+  useEffect(()=>watchAccount(value=>{setUser(value);setSaved([]);setSearches([]);}),[]);
   useEffect(()=>watchSaves(user,data=>{setSaved(data.homes);setSearches(data.searches);},()=>setNotice('Saved items could not be loaded.')),[user]);
   useEffect(()=>{if(user?.emailVerified&&pending){const action=pending;setPending(null);continueSave(action.changes).then(()=>setNotice(action.success)).catch(()=>setNotice('Save failed. Please try again.'));}},[user,pending]);
   const detailMode=Boolean(route.mlsNumber),filterKey=JSON.stringify(filters),savedKey=saved.join(',');
