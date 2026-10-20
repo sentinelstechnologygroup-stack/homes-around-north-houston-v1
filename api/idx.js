@@ -21,6 +21,7 @@ export default async function handler(request,response) {
     if(action === 'detail') filters._detail=true;
     const result = await queryListings(filters,config,process.env.REPLIERS_API_KEY);
     if (action === 'detail' && result.listings.length !== 1) return send(404,{error:'Listing unavailable for display.'});
+    if(action==='search'&&filters.pageNum===1){const area=String(input.location||'').trim();const safeArea=/^\d{5}$/.test(area)||/^[a-zA-Z .'-]{1,80}$/.test(area)?area:'Map or address search';console.info(JSON.stringify({event:'home_search',site:host,area:safeArea,minPrice:filters.minPrice||null,maxPrice:filters.maxPrice||null,beds:filters.minBedroomsTotal||null,baths:filters.minBaths||null,drawn:Boolean(input.polygon),mapArea:Boolean(input.bounds),total:result.total}));}
     return send(200,result);
   } catch(error) { return send(502,{error:error.message?.startsWith('Narrow your area')?error.message:'Home search is temporarily unavailable. Please try again shortly.'}); }
 }

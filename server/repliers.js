@@ -1,3 +1,4 @@
+export function readableDisclosure(value){const text=String(value||'').trim();return text.length<=1500 && /[ .]/.test(text) && !/^[A-Za-z0-9+/_=-]{80,}$/.test(text)?text:'Listing data supplied by the Houston Association of REALTORS® (HAR). Information is deemed reliable but not guaranteed.';}
 import {ringFrom,intersectBox} from './search-geometry.js';
 import {propertyDetails} from './property-details.js';
 import {listingHighlights} from './listing-highlights.js';
@@ -11,7 +12,7 @@ export function configuration(env, host) {
   const limited = mode === 'limited' && env.VERCEL_ENV === 'preview' && host === (env.GCR_IDX_REVIEW_HOST || env.VERCEL_URL) && listings.length > 0;
   const preview = mode === 'preview' && env.VERCEL_ENV === 'preview' && host === (env.GCR_IDX_REVIEW_HOST || env.VERCEL_URL);
   const production = mode === 'public' && env.GCR_IDX_PUBLIC_DISPLAY_AUTHORIZED === 'true' && env.GCR_IDX_ACCEPTANCE_PASSED === 'true' && ['goldencrossrealty.com','www.goldencrossrealty.com','goldencrossrealty.net','www.goldencrossrealty.net','goldencrossreality.net','www.goldencrossreality.net','homesaroundnorthhouston.com','www.homesaroundnorthhouston.com'].includes(host);
-  return { enabled: !!(env.REPLIERS_API_KEY && boards.length && verified && env.GCR_IDX_DISCLOSURE && (limited || preview || production)), mode, boards, listings, disclosure: env.GCR_IDX_DISCLOSURE || '' };
+  return { enabled: !!(env.REPLIERS_API_KEY && boards.length && verified && env.GCR_IDX_DISCLOSURE && (limited || preview || production)), mode, boards, listings, disclosure: readableDisclosure(env.GCR_IDX_DISCLOSURE) };
 }
 const validId = value => /^[A-Za-z0-9-]{1,50}$/.test(String(value));
 export function searchFilters(input, config) {

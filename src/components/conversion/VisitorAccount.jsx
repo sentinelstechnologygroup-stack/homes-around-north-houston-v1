@@ -1,0 +1,23 @@
+import { useEffect, useRef, useState } from 'react';
+import { accountsEnabled, enterAccount, leaveAccount, refreshAccount, verifyAccount, resetAccount, accountError } from '../../lib/visitorAccount';
+
+export default function VisitorAccount({user,onRefresh,requestId=0}){
+  const [open,setOpen]=useState(false),[register,setRegister]=useState(false),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+  useEffect(()=>{if(requestId){setOpen(true);setRegister(!user);}},[requestId,user]);
+  const dialog=useRef(null);
+  useEffect(()=>{if(!open)return;const previous=document.activeElement instanceof HTMLElement?document.activeElement:null,el=dialog.current;el?.querySelector('input,button')?.focus();const trap=e=>{if(e.key!=='Tab')return;const nodes=[...el.querySelectorAll('button:not(:disabled),input,a[href]')].filter(n=>n.getClientRects().length),first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}};el?.addEventListener('keydown',trap);return()=>{el?.removeEventListener('keydown',trap);previous?.focus?.();};},[open]);
+  async function act(work,success){setBusy(true);setMessage('');try{await work();setMessage(success);}catch(error){setMessage(accountError(error));}finally{setBusy(false);setPassword('');}}
+  return <section className="ps-panel" aria-label="Your home search account">
+    <div className="ps-tools"><strong>Your saved homes, wherever you are.</strong><button type="button" onClick={()=>setOpen(v=>!v)}>{user?'Your account':'Sign in / create account'}</button></div>
+    {open && <div className="ps-account-overlay" onKeyDown={e=>{if(e.key==='Escape')setOpen(false);}}><section ref={dialog} role="dialog" aria-modal="true" aria-label="Save homes to your profile" className="ps-account-dialog"><button type="button" className="ps-account-close" onClick={()=>setOpen(false)} aria-label="Close account">×</button><h2>Save homes to your profile</h2>{!accountsEnabled?<p>Cross-device accounts are temporarily unavailable. You can browse homes and send an inquiry in the meantime.</p>:user?<>
+      <p>Signed in as {user.email}. {user.emailVerified?'Your saved homes and searches sync across devices.':'Verify your email to unlock saved homes and searches.'}</p>
+      {!user.emailVerified && <div className="ps-tools"><button disabled={busy} type="button" onClick={()=>act(verifyAccount,'Verification email requested. Check your inbox and spam folder.')}>Send verification email</button><button disabled={busy} type="button" onClick={()=>act(async()=>{const value=await refreshAccount();onRefresh(value?{...value,emailVerified:value.emailVerified,uid:value.uid,email:value.email}:null);if(value?.emailVerified)setOpen(false);},'Account refreshed.')}>I have verified my email</button></div>}
+      <button disabled={busy} type="button" onClick={()=>act(leaveAccount,'Signed out.')}>Sign out</button>
+    </>:<form onSubmit={e=>{e.preventDefault();act(async()=>{await enterAccount(email,password,register);if(register)setRegister(false);else if((await refreshAccount())?.emailVerified)setOpen(false);},register?'Account created. Check your verification email, then choose I have verified my email. Your selected save will continue.':'Signed in.');}}>
+      <div className="ps-fields"><label>Email<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} /></label><label>Password<input required type="password" minLength={12} maxLength={128} autoComplete={register?'new-password':'current-password'} value={password} onChange={e=>setPassword(e.target.value)} /></label><button disabled={busy} type="submit">{register?'Create account':'Sign in'}</button></div>
+      <div className="ps-tools"><button disabled={busy} type="button" onClick={()=>setRegister(v=>!v)}>{register?'Already have an account?':'Create a new account'}</button><button disabled={busy||!email} type="button" onClick={()=>act(()=>resetAccount(email),'If an account is eligible, a password-reset email will be sent.')}>Reset password</button></div>
+      <p className="ps-small">Your saved search preferences are stored with your profile. Account creation does not enroll you in marketing emails or texts. Weekly matching emails require a separate preference and setup.</p>
+    </form>}{message && <p role="status">{message}</p>}</section></div>}
+  </section>;
+}
+
