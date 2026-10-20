@@ -48,6 +48,3 @@ export default function GmsInquiryForm({ property=null, filters={location:'',min
     </form>}
   </section>;
 }
-
-
-

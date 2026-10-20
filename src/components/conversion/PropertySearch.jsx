@@ -18,7 +18,7 @@ export default function PropertySearch({ compact=false,searchPath='/mls-search' 
   const detailMode=Boolean(route.mlsNumber),filterKey=JSON.stringify(filters),savedKey=saved.join(',');
   useEffect(()=>{const c=new AbortController();request({action:'config'},c.signal).then(setConfig).catch(()=>setConfig({enabled:false}));return()=>c.abort();},[]);
   useEffect(()=>{
-    if(!config?.enabled){setLoading(false);return;}
+    if(!config)return; if(!config.enabled){setLoading(false);return;}
     const c=new AbortController();setLoading(true);setError('');setResult(null);
     let query;
     if(detailMode)query={action:'detail',boardId:route.boardId,mlsNumber:route.mlsNumber};
@@ -58,4 +58,3 @@ export default function PropertySearch({ compact=false,searchPath='/mls-search' 
     </>}
   </div>;
 }
-

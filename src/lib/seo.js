@@ -10,9 +10,11 @@ export const pages = {
   '/terms': { title: 'Terms & Disclosures | Homes Around North Houston', description: 'Brokerage, technology, property information and fair housing disclosures for Homes Around North Houston.' },
 };
 export function pageMetadata(path) {
+  if (/^\/property\/147\/[A-Za-z0-9-]{1,50}$/.test(path)) return { title: 'Property Details | Homes Around North Houston', description: 'Explore this home and request assistance from the Golden Cross Realty office team.', noindex: true };
   return pages[path] || { title: 'Page Not Found | Homes Around North Houston', description: 'This page could not be found. Explore North Houston homes and real estate guidance.', noindex: true };
 }
 export const structuredData = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
   { '@type': 'WebSite', '@id': `${SITE_ORIGIN}/#website`, name: 'Homes Around North Houston', url: `${SITE_ORIGIN}/`, publisher: { '@id': `${SITE_ORIGIN}/#brokerage` } },
   { '@type': 'RealEstateAgent', '@id': `${SITE_ORIGIN}/#brokerage`, name: 'Golden Cross Realty', url: 'https://goldencrossrealty.net/', telephone: '+19365370568', areaServed: 'North Houston, Texas' },
 ] });
+
