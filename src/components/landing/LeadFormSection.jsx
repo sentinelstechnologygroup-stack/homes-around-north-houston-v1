@@ -154,7 +154,7 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
             <CheckCircle className="w-16 h-16 text-[#C5A059] mx-auto mb-6" />
             <h3 className="font-display text-2xl font-semibold text-[#0A192F] mb-3">Your Inquiry Has Been Received</h3>
             <p className="font-body text-[#0A192F]/60 text-lg">
-              The Golden Cross Realty office team will follow up about your request.
+              The office team will follow up about your request.
             </p>
             <p className="mt-5 text-sm text-[#0A192F]/70">Inquiry reference: {reference}</p>
 
@@ -182,7 +182,7 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
               <br />in North Houston
             </h2>
             <p className="font-body text-[#0A192F]/60 text-lg leading-relaxed mb-8">
-              Tell us about the home you want to buy, the property you plan to sell, or your investment property goals. The office team acting on behalf of Golden Cross Realty will follow up about your request.
+              Tell us about the home you want to buy, the property you plan to sell, or your investment property goals. Our office team will follow up about your request.
             </p>
 
             <div className="space-y-4">

@@ -10,14 +10,14 @@ test('default-off and independent licensing/host gates',()=>{
  for(const key of ['REPLIERS_API_KEY','GCR_IDX_BOARD_IDS','GCR_IDX_PILOT_MLS_NUMBERS','GCR_IDX_PERMISSIONS_VERIFIED','GCR_IDX_PERMISSION_EVIDENCE','GCR_IDX_DISCLOSURE'])assert.equal(configuration({...env,[key]:''},'review.vercel.app').enabled,false,key);
  assert.equal(configuration(env,'goldencrossrealty.com').enabled,false);assert.equal(configuration({...env,VERCEL_ENV:'production'},'review.vercel.app').enabled,false);
  assert.equal(configuration({...env,GCR_IDX_MODE:'public'},'goldencrossrealty.com').enabled,false);
- const approved={...env,GCR_IDX_MODE:'public',GCR_IDX_HAR_APPROVED:'true',GCR_IDX_ACCEPTANCE_PASSED:'true'};
+ const approved={...env,GCR_IDX_MODE:'public',GCR_IDX_PUBLIC_DISPLAY_AUTHORIZED:'true',GCR_IDX_ACCEPTANCE_PASSED:'true'};
  assert.equal(configuration(approved,'goldencrossrealty.com').enabled,true);assert.equal(configuration(approved,'gms.example').enabled,false);
 });
 test('filter mapping, bounds, scope, unsupported criteria',()=>{
  const f=searchFilters({location:'77301',forSale:'0',minPrice:'100',maxPrice:'500',beds:'3',baths:'2',page:'2',propertyType:'2'},config);
  assert.equal(f.zip,'77301');assert.equal(f.type,'lease');assert.equal(f.class,'condo');assert.equal(f.minBedroomsTotal,3);assert.equal(f.pageNum,2);assert.deepEqual(f.mlsNumber,['12345678']);assert.deepEqual(f.boardId,['123']);
  assert.deepEqual(searchFilters({location:'Houston, TX'},config).city,['Houston']);
- for(const input of [{tenantId:'other'},{page:'101'},{minPrice:'500',maxPrice:'100'},{mlsNumber:'99999999',boardId:'123'},{mlsNumber:'12345678',boardId:'456'},{foreclosures:'true'},{propertyType:'3'},{location:['Houston']},{page:'NaN'}])assert.throws(()=>searchFilters(input,config));
+ for(const input of [{tenantId:'other'},{page:'1001'},{minPrice:'500',maxPrice:'100'},{mlsNumber:'99999999',boardId:'123'},{mlsNumber:'12345678',boardId:'456'},{foreclosures:'true'},{propertyType:'3'},{location:['Houston']},{page:'NaN'}])assert.throws(()=>searchFilters(input,config));
 });
 test('display policy and projection remove private data',()=>{
  for(const l of [{...fixture,permissions:{}},{...fixture,boardId:456},{...fixture,status:'U'},{...fixture,mlsNumber:'99999999'}])assert.equal(projectListing(l,config),null);

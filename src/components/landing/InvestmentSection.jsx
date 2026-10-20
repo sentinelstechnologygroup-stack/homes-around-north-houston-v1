@@ -8,7 +8,7 @@ export default function InvestmentSection() {
       <div>
         <p className="text-[#9A7437] font-semibold text-sm uppercase tracking-[0.18em] mb-4">Investment Properties</p>
         <h2 className="font-display text-3xl md:text-4xl text-[#0A192F] mb-6">Find a property that fits your investment goals</h2>
-        <p className="text-lg text-[#0A192F]/75 leading-relaxed mb-7">Considering your first investment property or adding to an existing portfolio? Talk with Golden Cross Realty about available homes, your budget, and the areas you want to explore.</p>
+        <p className="text-lg text-[#0A192F]/75 leading-relaxed mb-7">Considering your first investment property or adding to an existing portfolio? Talk with our local team about available homes, your budget, and the areas you want to explore.</p>
         <Link to="/?interest=investing#contact" className="inline-flex items-center gap-2 rounded bg-[#0A192F] text-white font-semibold px-6 py-4">Discuss Investment Properties <ArrowRight size={18} /></Link>
       </div>
       <div className="bg-[#F1F3F5] border border-[#0A192F]/10 rounded-xl p-8">

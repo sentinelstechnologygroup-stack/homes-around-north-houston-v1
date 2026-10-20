@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   if (['active','hidden','exit','complete','verify_email','verify_sms'].includes(body.funnelAction)) {
     if (!/^[a-f0-9]{64}$/.test(body.sessionId || '') || !/^[a-f0-9]{64}$/.test(body.sessionToken || '')) return res.status(400).json({ error: 'Invalid session' });
     const goals = { ...(body.searchCriteria || {}), ...(body.property ? {boardId:body.property.boardId,mlsNumber:body.property.mlsNumber,propertyAddress:body.property.address} : {}), ...(body.funnelProfile || {}) };
-    const funnelProfile = Object.fromEntries(['area','city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext','budgetRange','timeline','workingWithAgent'].map(key => [key, clean(goals[key])]));
+    const funnelProfile = Object.fromEntries(['area','city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext','budgetRange','timeline','workingWithAgent'].map(key => [key, clean(goals[key],key==='polygon'?6000:200)]));
     funnelProfile.interested_in = Object.hasOwn(interests, goals.interested_in) ? goals.interested_in : '';
     funnelProfile.message = clean(goals.message, 2000);
     funnelProfile.weeklyListingPreferencePresented = goals.weeklyListingPreferencePresented === true;
@@ -76,13 +76,13 @@ export default async function handler(req, res) {
     weeklyListingEmailsRequested: body.weeklyListingPreferencePresented === true && body.weeklyListingEmailsRequested === true,
     submissionId, name, email, phone: digits.length === 10 ? `+1${digits}` : `+${digits}`, market: clean(goals.area, 200) || 'North Houston',
     services: [interest], sources: ['Homes Around North Houston website'],
-    notes: `Interest: ${interest}\n${clean(body.message, 2000)}\nSearch/property context: ${JSON.stringify(Object.fromEntries(['location','city','zip','minPrice','maxPrice','beds','baths','boardId','mlsNumber','propertyAddress'].map(key=>[key,clean(goals[key])]).filter(([,value])=>value)))}`,
+    notes: `Interest: ${interest}\n${clean(body.message, 2000)}\nSearch/property context: ${JSON.stringify(Object.fromEntries(['location','city','zip','minPrice','maxPrice','beds','baths','boardId','mlsNumber','propertyAddress'].map(key=>[key,clean(goals[key],key==='polygon'?6000:200)]).filter(([,value])=>value)))}`,
     pageUrl: `${req.headers.origin}/`, submittedAt: now, attribution,
     consent: { accepted: true, version: CONTACT_CONSENT_VERSION, text: CONTACT_CONSENT_TEXT, capturedAt: now, channels: ['phone', 'email'], smsAccepted: false },
     funnelProfile: {
       area: clean(goals.area, 200), budgetRange: clean(goals.budgetRange, 100), timeline: clean(goals.timeline, 100),
       propertyType: clean(goals.propertyType, 100), workingWithAgent: clean(goals.workingWithAgent, 30), financingStatus: clean(goals.financingStatus, 100),
-      ...Object.fromEntries(['city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext'].map(key => [key, clean(goals[key])])),
+      ...Object.fromEntries(['city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext'].map(key => [key, clean(goals[key],key==='polygon'?6000:200)])),
       completionStatus: body.funnelAction === 'capture' ? 'contact_captured' : 'completed',
     },
   };

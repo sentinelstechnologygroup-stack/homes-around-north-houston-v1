@@ -78,7 +78,7 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="hidden sm:block text-white/60 font-body text-base leading-relaxed mb-8 max-w-xl"
           >
-            Search homes across North Houston and talk with Golden Cross Realty about buying, selling, or exploring investment properties. Start with the properties, neighborhoods, and market information that fit your goals.
+            Search homes across North Houston and talk with our local team about buying, selling, or exploring investment properties. Start with the properties, neighborhoods, and market information that fit your goals.
           </motion.p>
 
           <motion.div
@@ -114,7 +114,7 @@ export default function HeroSection() {
               {[['minPrice','Min price','No minimum'],['maxPrice','Max price','No maximum'],['beds','Beds','Any beds'],['baths','Baths','Any baths']].map(([key,label,placeholder])=><label key={key} className="block min-w-0 text-sm font-semibold">{label}<select value={filters[key]} onChange={e=>update(key,e.target.value)} className="mt-2 min-h-12 w-full rounded-lg border border-[#0A192F]/25 bg-white px-3 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-[#C5A059]"><option value="">{placeholder}</option>{(key.endsWith('Price')?priceOptions:[1,2,3,4,5]).map(value=><option key={value} value={value}>{key.endsWith('Price')?priceLabel(value):`${value}+`}</option>)}</select></label>)}
             </div>
             {searchError && <p role="alert" className="text-sm font-medium text-red-700">{searchError}</p>}
-            <p className="text-xs leading-relaxed text-[#0A192F]/65">Browse the map and property details, then ask the Golden Cross Realty office team for help.</p>
+            <p className="text-xs leading-relaxed text-[#0A192F]/65">Browse the map and property details, then ask our local team for help.</p>
           </form>
         </div>
         <div className="flex flex-wrap items-center gap-4 lg:hidden">

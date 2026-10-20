@@ -1,3 +1,4 @@
+import {ringFrom,intersectBox} from './search-geometry.js';
 // Golden Cross Realty only. Never import this module into frontend code.
 const split = value => String(value || '').split(',').map(v => v.trim()).filter(Boolean);
 export function configuration(env, host) {
@@ -7,18 +8,18 @@ export function configuration(env, host) {
   const verified = env.GCR_IDX_PERMISSIONS_VERIFIED === 'true' && !!env.GCR_IDX_PERMISSION_EVIDENCE;
   const limited = mode === 'limited' && env.VERCEL_ENV === 'preview' && host === (env.GCR_IDX_REVIEW_HOST || env.VERCEL_URL) && listings.length > 0;
   const preview = mode === 'preview' && env.VERCEL_ENV === 'preview' && host === (env.GCR_IDX_REVIEW_HOST || env.VERCEL_URL);
-  const production = mode === 'public' && env.GCR_IDX_HAR_APPROVED === 'true' && env.GCR_IDX_ACCEPTANCE_PASSED === 'true' && ['goldencrossrealty.com', 'www.goldencrossrealty.com'].includes(host);
+  const production = mode === 'public' && env.GCR_IDX_PUBLIC_DISPLAY_AUTHORIZED === 'true' && env.GCR_IDX_ACCEPTANCE_PASSED === 'true' && ['goldencrossrealty.com','www.goldencrossrealty.com','goldencrossrealty.net','www.goldencrossrealty.net','goldencrossreality.net','www.goldencrossreality.net','homesaroundnorthhouston.com','www.homesaroundnorthhouston.com'].includes(host);
   return { enabled: !!(env.REPLIERS_API_KEY && boards.length && verified && env.GCR_IDX_DISCLOSURE && (limited || preview || production)), mode, boards, listings, disclosure: env.GCR_IDX_DISCLOSURE || '' };
 }
 const validId = value => /^[A-Za-z0-9-]{1,50}$/.test(String(value));
 export function searchFilters(input, config) {
-  const permitted = new Set(['location','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft']);
+  const permitted = new Set(['location','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability']);
   for (const key of Object.keys(input)) if (!permitted.has(key)) throw new Error('Unsupported filter.');
   for (const value of Object.values(input)) if (Array.isArray(value) || typeof value === 'object') throw new Error('Invalid filter.');
   if (input.foreclosures === true || input.foreclosures === 'true') throw new Error('Foreclosure filtering is not available.');
   if (input.forSale && !['0','1'].includes(input.forSale)) throw new Error('Invalid search type.');
-  const filters = { status: 'A', displayInternetEntireListing: 'Y', displayPublic: 'Y', type: input.forSale === '0' ? 'lease' : 'sale', resultsPerPage: 24, pageNum: 1, sortBy: 'updatedOnDesc', boardId: config.boards };
-  for (const [key, param, maximum] of [['minPrice','minPrice',100000000],['maxPrice','maxPrice',100000000],['beds','minBedroomsTotal',20],['baths','minBaths',20],['page','pageNum',100],['minSqft','minSqft',100000]]) {
+  const filters = { standardStatus: input.availability === 'active' ? ['Active','Active Under Contract'] : ['Active','Active Under Contract','Pending','Coming Soon'], displayInternetEntireListing: 'Y', displayPublic: 'Y', type: input.forSale === '0' ? 'lease' : 'sale', resultsPerPage: 50, pageNum: 1, sortBy: 'updatedOnDesc', boardId: config.boards };
+  for (const [key, param, maximum] of [['minPrice','minPrice',100000000],['maxPrice','maxPrice',100000000],['beds','minBedroomsTotal',20],['baths','minBaths',20],['page','pageNum',1000],['minSqft','minSqft',100000]]) {
     if (input[key] !== undefined && input[key] !== '') {
       const n = Number(input[key]); if (!Number.isInteger(n) || n < (key === 'page' ? 1 : 0) || n > maximum) throw new Error('Invalid numeric filter.');
       filters[param] = n;
@@ -28,13 +29,17 @@ export function searchFilters(input, config) {
   if (input.waterfront === 'true') filters.waterfront = 'Y';
   if (input.newListings === 'true') filters.minListDate = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
   if (input.openHouses === 'true') filters.minOpenHouseDate = new Date().toISOString().slice(0,10);
+  if(input.availability && !['all','active'].includes(input.availability))throw new Error('Invalid availability.');
+  if(input.pageSize){if(!['50','100'].includes(String(input.pageSize)))throw new Error('Choose 50 or 100 homes per page.');filters.resultsPerPage=Number(input.pageSize);}
+  let drawn=input.polygon ? ringFrom(input.polygon) : null;
   if (input.bounds) {
     const box=String(input.bounds).split(',').map(Number);
     const [w,s,e,n]=box;
     if(box.length!==4 || box.some(v=>!Number.isFinite(v)) || w>=e || s>=n || w < -180 || e>180 || s < -85 || n>85 || e-w>3 || n-s>3) throw new Error('Zoom in before searching this map area.');
-    filters.map=JSON.stringify([[[w,s],[e,s],[e,n],[w,n],[w,s]]]);
+    if(drawn){drawn=intersectBox(drawn,box);if(!drawn)filters._emptyArea=true;}else drawn=[[w,s],[e,s],[e,n],[w,n],[w,s]];
   }
-  if (input.sort) { if (!['updatedOnDesc','listPriceAsc','listPriceDesc'].includes(input.sort)) throw new Error('Invalid sort.'); filters.sortBy = input.sort; }
+  if(drawn)filters.map=JSON.stringify([drawn]);
+  if (input.sort) { if (!['updatedOnDesc','updatedOnAsc','createdOnDesc','createdOnAsc','listPriceAsc','listPriceDesc','sqftAsc','sqftDesc','yearBuiltAsc','yearBuiltDesc','addressAsc','addressDesc','lotSizeAsc','lotSizeDesc'].includes(input.sort)) throw new Error('Invalid sort.'); filters.sortBy = input.sort; }
   if (input.propertyType) {
     // Only mappings confirmed by the provider's normalized classes are supported.
     if (!['1','2'].includes(input.propertyType)) throw new Error('Use HAR for this property type during the pilot.');
@@ -64,7 +69,7 @@ export function searchFilters(input, config) {
   return filters;
 }
 export function projectListing(listing, config) {
-  if (!config.boards.includes(String(listing.boardId)) || listing.status !== 'A') return null;
+  if (!config.boards.includes(String(listing.boardId)) || !(listing.standardStatus ? ['Active','Active Under Contract','Pending','Coming Soon'].includes(listing.standardStatus) : listing.status === 'A')) return null;
   if (config.mode === 'limited' && !config.listings.includes(String(listing.mlsNumber))) return null;
   // Fail closed when Internet display permission is unknown or denied.
   if (listing.permissions?.displayInternetEntireListing !== 'Y' || listing.permissions?.displayPublic !== 'Y') return null;
@@ -76,16 +81,37 @@ export function projectListing(listing, config) {
     city: listing.address?.city || '', price: listing.listPrice, type: listing.type,
     beds: listing.details?.numBedrooms, baths: listing.details?.numBathrooms, sqft: listing.details?.sqft, coordinates,
     description: listing.permissions?.displayAddressOnInternet === 'Y' ? listing.details?.description || '' : '', brokerage: listing.office?.brokerageName || '',
-    updatedOn: listing.updatedOn || '',
+    updatedOn: listing.updatedOn || '', standardStatus: listing.standardStatus || 'Active', yearBuilt: listing.details?.yearBuilt || null, lotSqft: listing.lot?.squareFeet ?? null, lotAcres: listing.lot?.acres ?? null,
     images: (listing.images || []).slice(0,12).filter(p => typeof p === 'string' && /^[A-Za-z0-9_./-]+$/.test(p) && !p.includes('..')).map(p => `https://cdn.repliers.io/${p}`),
   };
 }
-export async function queryListings(filters, config, key, fetcher = fetch) {
-  const params = new URLSearchParams();
-  for (const [name,value] of Object.entries(filters)) for (const item of Array.isArray(value) ? value : [value]) params.append(name,String(item));
-  const response = await fetcher(`https://api.repliers.io/listings?${params}`, { method:'POST', headers:{'REPLIERS-API-KEY':key,Accept:'application/json','Content-Type':'application/json'}, body:'{}', redirect:'error', signal:AbortSignal.timeout(10000) });
-  if (!response.ok) throw new Error('Provider unavailable.');
-  const payload = await response.json();
-  if (!Array.isArray(payload.listings)) throw new Error('Invalid provider response.');
-  return { listings:payload.listings.map(l=>projectListing(l,config)).filter(Boolean), page:filters.pageNum, hasMore: payload.page < payload.numPages, disclosure:config.disclosure, limited:config.mode === 'limited', preview:config.mode==='preview', fetchedAt:new Date().toISOString() };
+const responseCache=new Map(),rankCache=new Map();
+async function provider(filters,key,fetcher){
+  const params=new URLSearchParams();for(const [name,value] of Object.entries(filters))if(!name.startsWith('_'))for(const item of Array.isArray(value)?value:[value])params.append(name,String(item));
+  const response=await fetcher(`https://api.repliers.io/listings?${params}`,{method:'POST',headers:{'REPLIERS-API-KEY':key,Accept:'application/json','Content-Type':'application/json'},body:'{}',redirect:'error',signal:AbortSignal.timeout(20000)});
+  if(!response.ok)throw new Error('Provider unavailable.');const payload=await response.json();if(!Array.isArray(payload.listings))throw new Error('Invalid provider response.');return payload;
+}
+export async function queryListings(filters,config,key,fetcher=fetch){
+  const cacheKey=JSON.stringify([key,config.mode,filters]);const cached=responseCache.get(cacheKey);if(fetcher===fetch&&cached?.until>Date.now())return cached.value;
+  let payload;
+  if(filters._emptyArea)payload={listings:[],page:filters.pageNum,numPages:0,count:0};
+  else if(/^(address|lotSize)/.test(filters.sortBy)){
+    const indexFilters={...filters,pageNum:1,resultsPerPage:1000,sortBy:'createdOnDesc',fields:'mlsNumber,boardId,status,standardStatus,address,permissions,lot.squareFeet'};
+    const indexKey=JSON.stringify([key,indexFilters]);let rows=rankCache.get(indexKey)?.until>Date.now()?rankCache.get(indexKey).rows:null;
+    if(!rows){const first=await provider(indexFilters,key,fetcher);if(first.count>10000)throw new Error('Narrow your area or filters to sort more than 10,000 matches by address or lot size.');rows=first.listings;
+      for(let page=2;page<=first.numPages;page++)rows.push(...(await provider({...indexFilters,pageNum:page},key,fetcher)).listings);
+      rows=rows.filter(l=>projectListing(l,config));if(fetcher===fetch){if(rankCache.size>10)rankCache.clear();rankCache.set(indexKey,{rows,until:Date.now()+60000});}
+    }
+    const descending=filters.sortBy.endsWith('Desc');const sorted=[...rows].sort((a,b)=>{
+      let order;if(filters.sortBy.startsWith('address'))order=[a.address?.streetName,a.address?.streetNumber,a.address?.unitNumber].join(' ').localeCompare([b.address?.streetName,b.address?.streetNumber,b.address?.unitNumber].join(' '),'en',{numeric:true});
+      else {const av=a.lot?.squareFeet,bv=b.lot?.squareFeet;if(av==null&&bv!=null)return 1;if(bv==null&&av!=null)return -1;order=Number(av||0)-Number(bv||0);}
+      return (descending?-order:order)||String(a.mlsNumber).localeCompare(String(b.mlsNumber));
+    });
+    const selected=sorted.slice((filters.pageNum-1)*filters.resultsPerPage,filters.pageNum*filters.resultsPerPage).map(l=>String(l.mlsNumber));
+    const full=selected.length?await provider({...filters,sortBy:'createdOnDesc',pageNum:1,mlsNumber:selected},key,fetcher):{listings:[]};
+    full.listings.sort((a,b)=>selected.indexOf(String(a.mlsNumber))-selected.indexOf(String(b.mlsNumber)));
+    payload={...full,count:rows.length,page:filters.pageNum,numPages:Math.ceil(rows.length/filters.resultsPerPage)};
+  }else payload=await provider(filters,key,fetcher);
+  const result={listings:payload.listings.map(l=>projectListing(l,config)).filter(Boolean),total:Number.isFinite(payload.count)?payload.count:null,page:filters.pageNum,pageSize:filters.resultsPerPage,numPages:payload.numPages,hasMore:payload.page<payload.numPages,disclosure:config.disclosure,limited:config.mode==='limited',preview:config.mode==='preview',fetchedAt:new Date().toISOString()};
+  if(fetcher===fetch){if(responseCache.size>100)responseCache.clear();responseCache.set(cacheKey,{value:result,until:Date.now()+15000});}return result;
 }

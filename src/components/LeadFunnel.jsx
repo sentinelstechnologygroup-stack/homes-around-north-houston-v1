@@ -34,7 +34,7 @@ export default function LeadFunnel() {
   return <Dialog open={open} onOpenChange={value => { if (!value) void close(); }}>
     <LeadFormSection popup open={open} closeRef={closeRef} panel={content => <DialogContent className=" max-w-2xl max-h-[90dvh] overflow-y-auto bg-white p-0 rounded-2xl" onInteractOutside={event => event.preventDefault()}>
       <div className="px-6 pt-6 pr-12">
-        <p className="text-[#C5A059] font-semibold text-sm">Homes Around North Houston · Golden Cross Realty</p>
+        <p className="text-[#C5A059] font-semibold text-sm">Homes Around North Houston</p>
         <DialogTitle className="font-display text-2xl mt-2 text-[#0A192F]">Your next chapter starts here</DialogTitle>
         <DialogDescription className="mt-2">{new URLSearchParams(location.search).get('inquiryContext') === 'search' ? 'Your search is already included. Share your contact details so the office team can help.' : 'Share your contact details, then tell us about your real estate goals.'}</DialogDescription>
       </div>

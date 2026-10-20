@@ -6,12 +6,12 @@ export function campaignDefaults(params) {
   const preset = presets[params.get('campaign')] || {};
   const search = { city: params.get('city') || (!/^\d{5}$/.test(params.get('location') || '') ? params.get('location') : '') || preset.city || '', zip: params.get('zip') || (/^\d{5}$/.test(params.get('location') || '') ? params.get('location') : ''),
     neighborhood: params.get('neighborhood') || '', minPrice: params.get('minPrice') || '', maxPrice: params.get('maxPrice') || preset.maxPrice || '' };
-  return { ...Object.fromEntries(['location','beds','baths','propertyType','bounds','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext'].map(key=>[key,params.get(key)||''])), ...search, area: search.city, budgetRange: search.maxPrice ? `Up to $${Number(search.maxPrice).toLocaleString('en-US')}` : '' };
+  return { ...Object.fromEntries(['location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext'].map(key=>[key,params.get(key)||''])), ...search, area: search.city, budgetRange: search.maxPrice ? `Up to $${Number(search.maxPrice).toLocaleString('en-US')}` : '' };
 }
 export function resultsUrl(form, current = '') {
   const query = new URLSearchParams(current);
   for(const key of ['inquiryContext','boardId','mlsNumber','propertyAddress','cta']) query.delete(key);
-  for (const key of ['city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','minSqft','waterfront','newListings']) if (form[key]) query.set(key, form[key]);
+  for (const key of ['city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newListings']) if (form[key]) query.set(key, form[key]);
   query.set('inquiry', 'received');
   return `/homes?${query}`;
 }

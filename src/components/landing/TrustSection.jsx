@@ -14,7 +14,7 @@ const blocks = [
   {
     icon: TrendingUp,
     title: "Sell Your Home",
-    desc: "Discuss your home's value, pricing strategy, and timeline with Golden Cross Realty.",
+    desc: "Discuss your home's value, pricing strategy, and timeline with our local team.",
     to: "/?interest=selling#contact", action: "Plan Your Sale",
   },
   {
