@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { accountsEnabled, enterAccount, leaveAccount, refreshAccount, verifyAccount, resetAccount, accountError } from '../../lib/visitorAccount';
 
-export default function VisitorAccount({user,onRefresh,requestId=0}){
+export default function VisitorAccount({user,onRefresh,requestId=0,onEmail=()=>{}}){
   const [open,setOpen]=useState(false),[register,setRegister]=useState(false),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
   useEffect(()=>{if(requestId){setOpen(true);setRegister(!user);}},[requestId,user]);
   const dialog=useRef(null);
@@ -9,7 +9,7 @@ export default function VisitorAccount({user,onRefresh,requestId=0}){
   async function act(work,success){setBusy(true);setMessage('');try{await work();setMessage(success);}catch(error){setMessage(accountError(error));}finally{setBusy(false);setPassword('');}}
   return <section className="ps-panel" aria-label="Your home search account">
     <div className="ps-tools"><strong>Your saved homes, wherever you are.</strong><button type="button" onClick={()=>setOpen(v=>!v)}>{user?'Your account':'Sign in / create account'}</button></div>
-    {open && <div className="ps-account-overlay" onKeyDown={e=>{if(e.key==='Escape')setOpen(false);}}><section ref={dialog} role="dialog" aria-modal="true" aria-label="Save homes to your profile" className="ps-account-dialog"><button type="button" className="ps-account-close" onClick={()=>setOpen(false)} aria-label="Close account">×</button><h2>Save homes to your profile</h2>{!accountsEnabled?<p>Cross-device accounts are temporarily unavailable. You can browse homes and send an inquiry in the meantime.</p>:user?<>
+    {open && <div className="ps-account-overlay" onKeyDown={e=>{if(e.key==='Escape')setOpen(false);}}><section ref={dialog} role="dialog" aria-modal="true" aria-label="Save homes to your profile" className="ps-account-dialog"><button type="button" className="ps-account-close" onClick={()=>setOpen(false)} aria-label="Close account">×</button><h2>Save homes to your profile</h2><button type="button" onClick={()=>{setOpen(false);onEmail();}}>Email this home or search instead</button>{!accountsEnabled?<p>Cross-device accounts are temporarily unavailable. You can browse homes and send an inquiry in the meantime.</p>:user?<>
       <p>Signed in as {user.email}. {user.emailVerified?'Your saved homes and searches sync across devices.':'Verify your email to unlock saved homes and searches.'}</p>
       {!user.emailVerified && <div className="ps-tools"><button disabled={busy} type="button" onClick={()=>act(verifyAccount,'Verification email requested. Check your inbox and spam folder.')}>Send verification email</button><button disabled={busy} type="button" onClick={()=>act(async()=>{const value=await refreshAccount();onRefresh(value?{...value,emailVerified:value.emailVerified,uid:value.uid,email:value.email}:null);if(value?.emailVerified)setOpen(false);},'Account refreshed.')}>I have verified my email</button></div>}
       <button disabled={busy} type="button" onClick={()=>act(leaveAccount,'Signed out.')}>Sign out</button>

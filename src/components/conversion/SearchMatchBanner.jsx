@@ -2,12 +2,13 @@ import {useEffect,useRef,useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {CONTACT_CONSENT_TEXT,CONTACT_CONSENT_VERSION} from '../../lib/contactConsent';
 import './search-match-banner.css';
-export default function SearchMatchBanner({initialCriteria=null,buttonLabel='Email this search'}){
+export default function SearchMatchBanner({initialCriteria=null,buttonLabel='Email this search',requestId=0,requestedCriteria=null}){
  const navigate=useNavigate(),started=useRef(new Date().toISOString()),receipt=useRef(null);
  const [criteria,setCriteria]=useState({location:'',neighborhood:'',minPrice:'',maxPrice:'',beds:'',baths:'',...initialCriteria});
  const [contact,setContact]=useState({name:'',email:'',phone:'',consent:true,weekly:true,website_check:''});
  const [open,setOpen]=useState(false),[sending,setSending]=useState(false),[error,setError]=useState(''),[done,setDone]=useState(null);
  useEffect(()=>{if(!open)return;const previous=document.activeElement instanceof HTMLElement?document.activeElement:null,dialog=document.querySelector('.match-dialog');const trap=e=>{if(e.key!=='Tab')return;const nodes=Array.from(dialog.querySelectorAll('button:not(:disabled),input,a[href],select')).filter(el=>el instanceof HTMLElement&&el.tabIndex!==-1&&el.getClientRects().length).map(el=>/** @type {HTMLElement} */(el));const first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}};dialog?.addEventListener('keydown',trap);return()=>{dialog?.removeEventListener('keydown',trap);previous?.focus?.();};},[open]);
+ const lastRequest=useRef(0);useEffect(()=>{if(requestId&&requestId!==lastRequest.current){lastRequest.current=requestId;setCriteria({location:'',neighborhood:'',minPrice:'',maxPrice:'',beds:'',baths:'',...requestedCriteria});setDone(null);setOpen(true);}},[requestId,requestedCriteria]);
  const change=(k,v)=>{setCriteria(c=>({...c,[k]:v}));setError('');};
  function prepare(e){e.preventDefault();if(criteria.minPrice&&criteria.maxPrice&&Number(criteria.minPrice)>Number(criteria.maxPrice)){setError('Maximum price must be at least the minimum price.');return;}setOpen(true);setError('');}
  async function submit(e){e.preventDefault();if(sending)return;setSending(true);setError('');
