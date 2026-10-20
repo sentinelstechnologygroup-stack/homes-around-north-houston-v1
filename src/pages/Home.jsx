@@ -1,3 +1,4 @@
+import SearchMatchBanner from '@/components/conversion/SearchMatchBanner';
 import React from "react";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
@@ -17,6 +18,7 @@ export default function Home() {
       <Navbar />
       <main id="main-content">
       <HeroSection />
+      <SearchMatchBanner />
       <TrustSection />
       <CommunitiesSection />
       <BuyersSection />

@@ -13,7 +13,7 @@ export function configuration(env, host) {
 }
 const validId = value => /^[A-Za-z0-9-]{1,50}$/.test(String(value));
 export function searchFilters(input, config) {
-  const permitted = new Set(['location','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom']);
+  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom']);
   for (const key of Object.keys(input)) if (!permitted.has(key)) throw new Error('Unsupported filter.');
   for (const value of Object.values(input)) if (Array.isArray(value) || typeof value === 'object') throw new Error('Invalid filter.');
   if (input.foreclosures === true || input.foreclosures === 'true') throw new Error('Foreclosure filtering is not available.');
@@ -46,6 +46,7 @@ export function searchFilters(input, config) {
     if (!['1','2'].includes(input.propertyType)) throw new Error('Use HAR for this property type during the pilot.');
     filters.class = input.propertyType === '2' ? 'condo' : 'residential';
   }
+  if(input.neighborhood){if(String(input.neighborhood).length>100)throw new Error('Neighborhood is too long.');filters.neighborhood=[String(input.neighborhood).trim()];}
   const location = String(input.location || '').trim();
   if (location.length > 100) throw new Error('Location is too long.');
   if (/^\d{5}$/.test(location)) filters.zip = location;
