@@ -1,3 +1,4 @@
+import '@/components/landing/compact-intake.css';
 import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -32,7 +33,7 @@ export default function LeadFunnel() {
     navigate({ pathname: location.pathname, search: location.search, hash: '' }, { replace: true });
   };
   return <Dialog open={open} onOpenChange={value => { if (!value) void close(); }}>
-    <LeadFormSection popup open={open} closeRef={closeRef} panel={content => <DialogContent className=" max-w-2xl max-h-[90dvh] overflow-y-auto bg-white p-0 rounded-2xl" onInteractOutside={event => event.preventDefault()}>
+    <LeadFormSection popup open={open} closeRef={closeRef} panel={content => <DialogContent className="intake-dialog max-w-2xl max-h-[90dvh] overflow-y-auto bg-white p-0 rounded-2xl" onInteractOutside={event => event.preventDefault()}>
       <div className="px-6 pt-6 pr-12">
         <p className="text-[#C5A059] font-semibold text-sm">Homes Around North Houston</p>
         <DialogTitle className="font-display text-2xl mt-2 text-[#0A192F]">Your next chapter starts here</DialogTitle>

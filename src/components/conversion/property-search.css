@@ -7,3 +7,5 @@
 
 /* The map remains in view while the gallery scrolls underneath it. */
 .ps-layout{position:relative;display:block;isolation:isolate}.ps-map-wrap{position:sticky;top:94px;z-index:25;background:#f6f5f1;padding:10px 0 8px;margin-bottom:26px;border-bottom:1px solid #dce1e5;box-shadow:0 10px 18px #14283b0d}.ps-map-wrap .ps-map-controls{margin-bottom:8px}.ps-map-wrap>.ps-tools{margin-top:7px}.ps-map-wrap .ps-small{font-size:11px;margin:6px 0;line-height:1.4}.ps-map-wrap [role=region]{height:clamp(210px,29vh,330px)!important}.ps-grid{position:relative;z-index:0}.ps-card{min-width:0}.property-search{overflow:visible}.ps-detail{max-width:1440px;margin:auto}@media(max-width:600px){.ps-map-wrap{top:78px;padding-top:6px}.ps-map-wrap [role=region]{height:clamp(160px,25vh,220px)!important}.ps-map-wrap>.ps-small{display:none}.ps-map-controls{gap:6px}.ps-map-wrap button{padding:6px 9px;font-size:12px;min-height:36px}.ps-map-wrap .ps-check{font-size:12px}}
+
+.ps-map-wrap [role=region]{height:clamp(300px,42vh,480px)!important}@media(max-width:600px){.ps-map-wrap [role=region]{height:clamp(240px,36vh,340px)!important}}

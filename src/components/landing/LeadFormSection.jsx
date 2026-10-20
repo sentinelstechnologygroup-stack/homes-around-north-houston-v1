@@ -1,4 +1,4 @@
-import { WEEKLY_LISTING_EMAIL_LABEL } from '@/lib/listingEmailPreference';
+import CompactPreferences from './CompactPreferences';
 import React, { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Send, CheckCircle } from "lucide-react"
@@ -256,53 +256,8 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
               </div>
 
               </>}
-              {step === 2 && <div>
-                <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Interested In *</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {interests.map((opt) => (
-                    <button
-                      type="button"
-                      key={opt.value}
-                      aria-pressed={form.interested_in === opt.value}
-                      onClick={() => update("interested_in", opt.value)}
-                      className={`px-4 py-2.5 rounded-lg border text-sm font-body font-medium transition-all duration-300 ${
-                        form.interested_in === opt.value
-                          ? "bg-[#0A192F] text-white border-[#0A192F]"
-                          : "border-[#0A192F]/10 text-[#0A192F]/60 hover:border-[#C5A059]"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>}
-              {step === 1 && <>
-                <label className="flex items-start gap-3 text-sm text-[#0A192F]/75 leading-relaxed"><input required type="checkbox" checked={form.consentAccepted} onChange={e => update("consentAccepted", e.target.checked)} className="mt-1" />{CONTACT_CONSENT_TEXT}</label>
-              </>}
-              {step === 2 && <>
-                {searchInquiry && <div className="rounded-lg bg-[#F1F3F5] p-4 text-sm"><strong>Your search is included</strong><p>{[form.city || form.zip || form.location, form.minPrice && `From $${Number(form.minPrice).toLocaleString()}`, form.maxPrice && `Up to $${Number(form.maxPrice).toLocaleString()}`, form.beds && `${form.beds}+ beds`, form.baths && `${form.baths}+ baths`, form.mlsNumber && `MLS #${form.mlsNumber}`].filter(Boolean).join(' · ')}</p><p>You can add optional details below without entering your search again.</p></div>}
-                <button type="button" aria-label="Close preferences and request a callback" onClick={async () => { if (sending) return; setSending(true); try { await sendFunnelAction(session, 'exit', {}, collectTelemetry()); setSubmitted(true) } catch (failure) { setError(failure.message) } finally { setSending(false) } }} className="float-right text-sm underline">Close ×</button>
-                <p className="text-sm text-[#0A192F]/70">{form.name} · {form.email} · {form.phone}</p>
-                {!searchInquiry && [
-                  ["city", "City", "Conroe"], ["zip", "ZIP code", "Optional"], ["neighborhood", "Neighborhood", "Optional"],
-                  ["minPrice", "Minimum price", "Optional"], ["maxPrice", "Maximum price", "Optional"],
-                ].map(([field, label, placeholder]) => <label key={field} className="block text-sm font-medium text-[#0A192F]">{label}<input aria-label={label} type={field.endsWith('Price') ? 'number' : 'text'} min={0} value={form[field]} onChange={e => update(field, e.target.value)} placeholder={placeholder} maxLength={200} className="mt-2 w-full px-4 py-3 rounded-lg border border-[#0A192F]/10" /></label>)}
-                <label className="block text-sm font-medium text-[#0A192F]">When are you planning to move or purchase?<select aria-label="Timeline" value={form.timeline} onChange={e => update("timeline", e.target.value)} className="mt-2 w-full px-4 py-3 rounded-lg border border-[#0A192F]/10"><option value="">Select a timeframe (optional)</option>{["Within 3 months", "3–6 months", "6–12 months", "Just exploring"].map(value => <option key={value}>{value}</option>)}</select></label>
-                <label className="block text-sm font-medium text-[#0A192F]">Are you already working with a real estate agent?<select aria-label="Working with an agent" value={form.workingWithAgent} onChange={e => update("workingWithAgent", e.target.value)} className="mt-2 w-full px-4 py-3 rounded-lg border border-[#0A192F]/10"><option value="">Select an answer (optional)</option><option value="yes">Yes</option><option value="no">No</option><option value="unsure">Not sure</option></select></label>
-              <label className="flex items-start gap-3 text-sm text-[#0A192F]/75 leading-relaxed"><input type="checkbox" checked={form.weeklyListingEmailsRequested} onChange={e => update("weeklyListingEmailsRequested", e.target.checked)} className="mt-1" />{WEEKLY_LISTING_EMAIL_LABEL}</label>
-              <div>
-                <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Message</label>
-                <textarea
-                  aria-label="Message"
-                  value={form.message}
-                  onChange={(e) => update("message", e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-lg border border-[#0A192F]/10 font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors resize-none"
-                  placeholder="Tell us about your real estate goals..."
-                />
-              </div>
-
-              </>}
+              {step === 2 && <CompactPreferences form={form} update={update} searchInquiry={searchInquiry} onLocation={value=>setForm(current=>({...current,location:value,city:/^\d{5}$/.test(value)?'':value,zip:/^\d{5}$/.test(value)?value:''}))} />}
+              {step === 1 && <label className="flex items-start gap-3 text-sm text-[#0A192F]/75 leading-relaxed"><input required type="checkbox" checked={form.consentAccepted} onChange={e=>update('consentAccepted',e.target.checked)} className="mt-1" />{CONTACT_CONSENT_TEXT}</label>}
               <div className="hidden" aria-hidden="true"><input aria-label="Leave this field empty" tabIndex={-1} autoComplete="off" value={form.website_check} onChange={e => update("website_check", e.target.value)} /></div>
               {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
               <button
