@@ -18,6 +18,7 @@ export default async function handler(request,response) {
   let filters;
   try { filters = searchFilters(input,config); } catch(error) { return send(400,{error:error.message}); }
   try {
+    if(action === 'detail') filters._detail=true;
     const result = await queryListings(filters,config,process.env.REPLIERS_API_KEY);
     if (action === 'detail' && result.listings.length !== 1) return send(404,{error:'Listing unavailable for display.'});
     return send(200,result);

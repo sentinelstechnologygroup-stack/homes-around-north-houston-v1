@@ -5,9 +5,20 @@ import {intersectBox} from '../server/search-geometry.js';
 const config={boards:['147'],mode:'public',disclosure:'HAR'};
 const listing=(id,price=100)=>({mlsNumber:id,boardId:147,status:'A',standardStatus:'Active',listPrice:price,address:{streetName:id,city:'Conroe'},permissions:{displayInternetEntireListing:'Y',displayPublic:'Y',displayAddressOnInternet:'Y'},details:{},lot:{squareFeet:price}});
 test('page sizes, complete market statuses and native sorting are forwarded without losing location',()=>{
+ assert.equal(searchFilters({},config).resultsPerPage,48);
+ assert.equal(searchFilters({pageSize:'96'},config).resultsPerPage,96);
  const f=searchFilters({location:'Conroe',pageSize:'100',page:'27',sort:'yearBuiltAsc',bounds:'-95.8,30.1,-95.6,30.3'},config);
  assert.equal(f.resultsPerPage,100);assert.equal(f.pageNum,27);assert.equal(f.sortBy,'yearBuiltAsc');assert.deepEqual(f.city,['Conroe']);assert.ok(f.standardStatus.includes('Pending'));assert.ok(f.standardStatus.includes('Coming Soon'));assert.equal(f.status,undefined);
  assert.throws(()=>searchFilters({pageSize:'10000'},config));
+});
+test('detail projection exposes organized public facts and more photos without leaking raw or restricted address fields',()=>{
+ const raw={...listing('detail'),address:{streetName:'Home',city:'Conroe',zip:'77304',neighborhood:'Public subdivision'},details:{heating:'Gas',HOAFee:'650',privateRemarks:'SECRET'},taxes:{annualAmount:2500},rooms:[{description:'Bedroom',length:'12',width:'10',private:'SECRET'}],images:Array.from({length:35},(_,i)=>`photo${i}.jpg`)};
+ const card=projectListing(raw,config),detail=projectListing(raw,config,true);
+ assert.equal(card.images.length,12);assert.equal(card.propertyDetails,undefined);assert.equal(detail.images.length,35);
+ assert.equal(detail.propertyDetails.rooms[0].dimensions,'12 × 10');assert.ok(detail.propertyDetails.sections.find(s=>s.title==='HOA & property taxes'));
+ assert.ok(!JSON.stringify(detail).includes('SECRET'));
+ const hidden=projectListing({...raw,permissions:{...raw.permissions,displayAddressOnInternet:'N'}},config,true);
+ assert.equal(hidden.address,'Address available on request');assert.equal(hidden.coordinates,null);assert.ok(!JSON.stringify(hidden.propertyDetails).includes('77304'));assert.ok(!JSON.stringify(hidden.propertyDetails).includes('Public subdivision'));
 });
 test('drawn shape and viewport intersect; panning away never drops the city constraint',()=>{
  const ring=[[-95.5,30],[-95.3,30],[-95.3,30.2],[-95.5,30.2],[-95.5,30]];
