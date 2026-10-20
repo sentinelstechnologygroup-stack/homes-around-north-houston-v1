@@ -13,7 +13,7 @@ export function configuration(env, host) {
 }
 const validId = value => /^[A-Za-z0-9-]{1,50}$/.test(String(value));
 export function searchFilters(input, config) {
-  const permitted = new Set(['location','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability']);
+  const permitted = new Set(['location','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom']);
   for (const key of Object.keys(input)) if (!permitted.has(key)) throw new Error('Unsupported filter.');
   for (const value of Object.values(input)) if (Array.isArray(value) || typeof value === 'object') throw new Error('Invalid filter.');
   if (input.foreclosures === true || input.foreclosures === 'true') throw new Error('Foreclosure filtering is not available.');
@@ -29,6 +29,7 @@ export function searchFilters(input, config) {
   if (input.waterfront === 'true') filters.waterfront = 'Y';
   if (input.newListings === 'true') filters.minListDate = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
   if (input.openHouses === 'true') filters.minOpenHouseDate = new Date().toISOString().slice(0,10);
+  if(input.mapZoom){const zoom=Number(input.mapZoom);if(!Number.isInteger(zoom)||zoom<1||zoom>22)throw new Error('Invalid map zoom.');filters._mapZoom=zoom;}
   if(input.availability && !['all','active'].includes(input.availability))throw new Error('Invalid availability.');
   if(input.pageSize){if(!['50','100'].includes(String(input.pageSize)))throw new Error('Choose 50 or 100 homes per page.');filters.resultsPerPage=Number(input.pageSize);}
   let drawn=input.polygon ? ringFrom(input.polygon) : null;
@@ -91,6 +92,21 @@ async function provider(filters,key,fetcher){
   const response=await fetcher(`https://api.repliers.io/listings?${params}`,{method:'POST',headers:{'REPLIERS-API-KEY':key,Accept:'application/json','Content-Type':'application/json'},body:'{}',redirect:'error',signal:AbortSignal.timeout(20000)});
   if(!response.ok)throw new Error('Provider unavailable.');const payload=await response.json();if(!Array.isArray(payload.listings))throw new Error('Invalid provider response.');return payload;
 }
+const clusterCache=new Map();
+async function mapClusters(filters,config,key,fetcher){
+ if(filters._emptyArea)return {clusters:[],mapCoverage:'all'};
+ const mapFilters={...filters,pageNum:1,resultsPerPage:1,sortBy:'createdOnDesc',displayAddressOnInternet:'Y',cluster:true,listings:false,clusterLimit:200,clusterPrecision:14,clusterFields:'mlsNumber,boardId,status,standardStatus,listPrice,address,permissions,map'};
+ const cacheKey=JSON.stringify([key,mapFilters]);const prior=clusterCache.get(cacheKey);if(fetcher===fetch&&prior?.until>Date.now())return prior.value;
+ let payload;
+ for(let precision=Math.min(27,Math.max(10,(filters._mapZoom||10)+3));precision>=8;precision-=2){payload=await provider({...mapFilters,clusterPrecision:precision},key,fetcher);const clusters=payload.aggregates?.map?.clusters;if(!Array.isArray(clusters))return {clusters:[],mapCoverage:'page'};if(clusters.reduce((n,c)=>n+Number(c.count||0),0)>=payload.count)break;}
+ const clusters=(payload.aggregates?.map?.clusters||[]).map(c=>{
+  const latitude=Number(c.location?.latitude),longitude=Number(c.location?.longitude);const t=c.bounds?.top_left,b=c.bounds?.bottom_right;const box=[Number(t?.longitude),Number(b?.latitude),Number(b?.longitude),Number(t?.latitude)];
+  if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>85||Math.abs(longitude)>180||!Number.isInteger(c.count)||c.count<1||box.some(v=>!Number.isFinite(v)))return null;
+  return {count:c.count,coordinates:[latitude,longitude],bounds:box,listing:c.count===1&&c.listing?projectListing(c.listing,config):null};
+ }).filter(Boolean);
+ const value={clusters,mapCoverage:clusters.reduce((n,c)=>n+c.count,0)>=payload.count?'all':'page'};
+ if(fetcher===fetch){if(clusterCache.size>100)clusterCache.clear();clusterCache.set(cacheKey,{value,until:Date.now()+15000});}return value;
+}
 export async function queryListings(filters,config,key,fetcher=fetch){
   const cacheKey=JSON.stringify([key,config.mode,filters]);const cached=responseCache.get(cacheKey);if(fetcher===fetch&&cached?.until>Date.now())return cached.value;
   let payload;
@@ -112,6 +128,7 @@ export async function queryListings(filters,config,key,fetcher=fetch){
     full.listings.sort((a,b)=>selected.indexOf(String(a.mlsNumber))-selected.indexOf(String(b.mlsNumber)));
     payload={...full,count:rows.length,page:filters.pageNum,numPages:Math.ceil(rows.length/filters.resultsPerPage)};
   }else payload=await provider(filters,key,fetcher);
-  const result={listings:payload.listings.map(l=>projectListing(l,config)).filter(Boolean),total:Number.isFinite(payload.count)?payload.count:null,page:filters.pageNum,pageSize:filters.resultsPerPage,numPages:payload.numPages,hasMore:payload.page<payload.numPages,disclosure:config.disclosure,limited:config.mode==='limited',preview:config.mode==='preview',fetchedAt:new Date().toISOString()};
+  const mapData=await mapClusters(filters,config,key,fetcher).catch(()=>({clusters:[],mapCoverage:'page'}));
+  const result={...mapData,listings:payload.listings.map(l=>projectListing(l,config)).filter(Boolean),total:Number.isFinite(payload.count)?payload.count:null,page:filters.pageNum,pageSize:filters.resultsPerPage,numPages:payload.numPages,hasMore:payload.page<payload.numPages,disclosure:config.disclosure,limited:config.mode==='limited',preview:config.mode==='preview',fetchedAt:new Date().toISOString()};
   if(fetcher===fetch){if(responseCache.size>100)responseCache.clear();responseCache.set(cacheKey,{value:result,until:Date.now()+15000});}return result;
 }

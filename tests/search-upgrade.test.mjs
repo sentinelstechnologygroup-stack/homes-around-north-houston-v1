@@ -35,3 +35,11 @@ test('public activation is limited to authorized custom domains',()=>{
  assert.equal(configuration(env,'www.homesaroundnorthhouston.com').enabled,true);
  assert.equal(configuration(env,'foreign.example').enabled,false);
 });
+test('map clusters represent all matches independently of the cards and exclude restricted-address records',async()=>{
+ let mapQuery;
+ const fetcher=async url=>{const p=new URL(url).searchParams;const clustered=p.get('cluster')==='true';if(clustered)mapQuery=p;
+ return {ok:true,json:async()=>clustered?{listings:[],count:2867,aggregates:{map:{clusters:[{count:2867,location:{latitude:30.3,longitude:-95.4},bounds:{top_left:{latitude:30.5,longitude:-95.6},bottom_right:{latitude:30.1,longitude:-95.2}}}]}}}:{listings:[listing('one')],count:2867,page:1,numPages:58}};};
+ const result=await queryListings(searchFilters({},config),config,'synthetic',fetcher);
+ assert.equal(result.listings.length,1);assert.equal(result.clusters[0].count,2867);assert.equal(result.mapCoverage,'all');
+ assert.equal(mapQuery.get('displayAddressOnInternet'),'Y');assert.equal(mapQuery.get('displayPublic'),'Y');assert.equal(mapQuery.get('listings'),'false');
+});

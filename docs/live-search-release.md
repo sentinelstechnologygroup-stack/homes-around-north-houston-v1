@@ -3,6 +3,7 @@
 Patrick explicitly authorized publishing the map/search changes to GoldenCrossRealty.net and HomesAroundNorthHouston.com. Earlier preview-only/domain-launch instructions are superseded for this website release. Phone-agent qualification criteria and client outreach approval remain separate.
 
 - Full-width Leaflet/OpenStreetMap map; four listing columns on wide screens, three/two/one at smaller widths.
+- Native Repliers map clusters cover the complete matching public inventory, separately from paginated cards. Cluster precision backs off rather than truncating matching coverage.
 - Real provider totals; 50/100 results per page; complete pagination.
 - Active, pending and coming-soon search, with status badges and active-only option.
 - Address, square footage, lot size, price and year-built sorts in both directions. Address/lot sorting ranks the complete matching set before pagination; searches over 10,000 matches must be narrowed for these two sorts. Other sorts are native Repliers queries.
