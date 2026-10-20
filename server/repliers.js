@@ -1,5 +1,6 @@
 import {ringFrom,intersectBox} from './search-geometry.js';
 import {propertyDetails} from './property-details.js';
+import {listingHighlights} from './listing-highlights.js';
 // Golden Cross Realty only. Never import this module into frontend code.
 const split = value => String(value || '').split(',').map(v => v.trim()).filter(Boolean);
 export function configuration(env, host) {
@@ -14,7 +15,7 @@ export function configuration(env, host) {
 }
 const validId = value => /^[A-Za-z0-9-]{1,50}$/.test(String(value));
 export function searchFilters(input, config) {
-  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom']);
+  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom','featuredOnly']);
   for (const key of Object.keys(input)) if (!permitted.has(key)) throw new Error('Unsupported filter.');
   for (const value of Object.values(input)) if (Array.isArray(value) || typeof value === 'object') throw new Error('Invalid filter.');
   if (input.foreclosures === true || input.foreclosures === 'true') throw new Error('Foreclosure filtering is not available.');
@@ -48,12 +49,14 @@ export function searchFilters(input, config) {
     filters.class = input.propertyType === '2' ? 'condo' : 'residential';
   }
   if(input.neighborhood){if(String(input.neighborhood).length>100)throw new Error('Neighborhood is too long.');filters.neighborhood=[String(input.neighborhood).trim()];}
+
   const location = String(input.location || '').trim();
   if (location.length > 100) throw new Error('Location is too long.');
   if (/^\d{5}$/.test(location)) filters.zip = location;
   else if (/^\d{7,9}$/.test(location)) filters.mlsNumber = [location];
   else if (/\d+\s+\S+/.test(location)) { filters.search = location; filters.searchFields = 'address.streetNumber,address.streetName,address.streetSuffix,address.city'; }
   else if (location) filters.city = [location.replace(/,?\s*(TX|Texas)$/i, '').trim()];
+  if(input.featuredOnly==='true'){if(filters.search)throw new Error('Use a city or ZIP with the Golden Cross filter.');filters.search='Golden Cross Realty';filters.searchFields='office.brokerageName';}
   if (input.mlsNumber) {
     if (!validId(input.mlsNumber) || !config.boards.includes(String(input.boardId))) throw new Error('Invalid listing reference.');
     filters.mlsNumber = [input.mlsNumber]; filters.boardId = [String(input.boardId)];
@@ -80,7 +83,7 @@ export function projectListing(listing, config, detailed=false) {
   const lat=Number(listing.map?.latitude),lng=Number(listing.map?.longitude);
   const coordinates=listing.permissions?.displayAddressOnInternet==='Y' && listing.map?.latitude!=null && listing.map?.longitude!=null && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat)<=85 && Math.abs(lng)<=180 ? [lat,lng] : null;
   return {
-    mlsNumber: String(listing.mlsNumber), boardId: String(listing.boardId), address,
+    mlsNumber: String(listing.mlsNumber), boardId: String(listing.boardId), address,...listingHighlights(listing),
     city: listing.address?.city || '', price: listing.listPrice, type: listing.type,
     beds: listing.details?.numBedrooms, baths: listing.details?.numBathrooms, sqft: listing.details?.sqft, coordinates,
     description: listing.permissions?.displayAddressOnInternet === 'Y' ? listing.details?.description || '' : '', brokerage: listing.office?.brokerageName || '',
