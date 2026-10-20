@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import PropertySearchPreview from "@/components/PropertySearchPreview";
+import PropertySearch from "@/components/conversion/PropertySearch";
+import Navbar from "@/components/landing/Navbar";
+import Footer from "@/components/landing/Footer";
 import { useSearchParams } from "react-router-dom";
 import PageShell from "@/components/PageShell";
 import { HAR_SEARCH, buildHarSearchUrl } from "@/lib/siteConfig";
@@ -13,6 +16,7 @@ export default function Homes() {
   }, []);
   const keys = ["city", "zip", "neighborhood", "minPrice", "maxPrice"];
   const src = keys.some(key => params.get(key)) ? buildHarSearchUrl(Object.fromEntries(keys.map(key => [key, params.get(key) || ""]))) : HAR_SEARCH;
+  if (previewEnabled) return <><Navbar /><main id="main-content" className="pt-24"><PropertySearch compact searchPath="/homes" /></main><Footer /></>;
   return <PageShell title="Search North Houston Homes" intro="Find your next home in North Houston. Narrow your search by location, price, and the features that matter to you.">
     {previewEnabled && <PropertySearchPreview />}
     <a href={src} target="_blank" rel="noopener noreferrer" className="inline-block mb-6 px-6 py-3 rounded bg-[#0A192F] text-white font-semibold">Open Home Search in a New Tab ↗</a>

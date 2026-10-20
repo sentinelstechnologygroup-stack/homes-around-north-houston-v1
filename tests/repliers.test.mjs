@@ -15,7 +15,7 @@ test('default-off and independent licensing/host gates',()=>{
 });
 test('filter mapping, bounds, scope, unsupported criteria',()=>{
  const f=searchFilters({location:'77301',forSale:'0',minPrice:'100',maxPrice:'500',beds:'3',baths:'2',page:'2',propertyType:'2'},config);
- assert.equal(f.zip,'77301');assert.equal(f.type,'lease');assert.equal(f.class,'condo');assert.equal(f.minBeds,3);assert.equal(f.pageNum,2);assert.deepEqual(f.mlsNumber,['12345678']);assert.deepEqual(f.boardId,['123']);
+ assert.equal(f.zip,'77301');assert.equal(f.type,'lease');assert.equal(f.class,'condo');assert.equal(f.minBedroomsTotal,3);assert.equal(f.pageNum,2);assert.deepEqual(f.mlsNumber,['12345678']);assert.deepEqual(f.boardId,['123']);
  assert.deepEqual(searchFilters({location:'Houston, TX'},config).city,['Houston']);
  for(const input of [{tenantId:'other'},{page:'101'},{minPrice:'500',maxPrice:'100'},{mlsNumber:'99999999',boardId:'123'},{mlsNumber:'12345678',boardId:'456'},{foreclosures:'true'},{propertyType:'3'},{location:['Houston']},{page:'NaN'}])assert.throws(()=>searchFilters(input,config));
 });
@@ -39,4 +39,23 @@ test('protected preview uses only its trusted deployment hostname when no explic
  assert.equal(configuration(preview,'unrelated.vercel.app').enabled,false);
  assert.equal(configuration({...preview,VERCEL_ENV:'production'},'immutable-preview.vercel.app').enabled,false);
  assert.equal(configuration({...preview,VERCEL_URL:''},'immutable-preview.vercel.app').enabled,false);
+});
+
+test('full preview expands inventory only behind the preview host gate',()=>{
+ const full={...env,GCR_IDX_MODE:'preview'};
+ const c=configuration(full,'review.vercel.app');
+ assert.equal(c.enabled,true);assert.equal(searchFilters({},c).mlsNumber,undefined);
+ assert.equal(configuration(full,'goldencrossrealty.net').enabled,false);
+ assert.equal(configuration({...full,VERCEL_ENV:'production'},'review.vercel.app').enabled,false);
+ const f=searchFilters({bounds:'-95.8,30,-95.1,30.6',waterfront:'true',beds:'3',minSqft:'1500',newListings:'true'},c);
+ assert.equal(f.minBedroomsTotal,3);assert.equal(f.waterfront,'Y');assert.equal(f.minSqft,1500);assert.ok(f.minListDate);assert.equal(JSON.parse(f.map)[0].length,5);
+ for(const bounds of ['0,0,100,100','NaN,30,-95,31','-95,31,-96,30'])assert.throws(()=>searchFilters({bounds},c));
+ assert.throws(()=>searchFilters({ids:Array(13).fill('12345678').join(',')},c));
+});
+
+test('address privacy also removes exact map coordinates',()=>{
+ const coordinates={...fixture,map:{latitude:'30.3',longitude:'-95.4'}};
+ assert.equal(projectListing(coordinates,config).coordinates,null);
+ assert.deepEqual(projectListing({...coordinates,permissions:{...fixture.permissions,displayAddressOnInternet:'Y'}},config).coordinates,[30.3,-95.4]);
+ assert.equal(projectListing({...coordinates,permissions:{...fixture.permissions,displayPublic:'N'}},config),null);
 });

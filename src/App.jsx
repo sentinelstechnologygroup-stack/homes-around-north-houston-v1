@@ -21,6 +21,7 @@ export function SiteRoutes() {
         <Route path="/sell" element={<IntentPage interest="selling" />} />
         <Route path="/investment-properties" element={<IntentPage interest="investing" />} />
         <Route path="/homes" element={<Homes />} />
+        <Route path="/property/:boardId/:mlsNumber" element={<Homes />} />
         <Route path="/market-reports" element={<MarketReports />} />
         <Route path="/privacy" element={<Legal type="privacy" />} />
         <Route path="/terms" element={<Legal type="terms" />} />

@@ -25,6 +25,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
   const origins = (process.env.ALLOWED_ORIGINS || allowedOrigins.join(',')).split(',').map(item => item.trim());
+  if(process.env.VERCEL_ENV==='preview' && process.env.VERCEL_URL) origins.push('https://'+process.env.VERCEL_URL);
   if (!req.headers.origin || !origins.includes(req.headers.origin)) return res.status(403).json({ error: 'Origin not allowed' });
   if (!String(req.headers['content-type'] || '').includes('application/json')) return res.status(415).json({ error: 'JSON required' });
   if (throttled(req)) return res.status(429).json({ error: 'Please wait before submitting another inquiry.' });
@@ -52,6 +53,8 @@ export default async function handler(req, res) {
   const token = process.env.LEAD_WEBHOOK_TOKEN;
   const route = process.env.GMS_LEAD_ROUTE_KEY;
   if (!webhook || !token || !route) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });
+  const property=body.property && body.property.boardId==='147' && /^[A-Za-z0-9-]{1,50}$/.test(body.property.mlsNumber||'') ? {boardId:'147',mlsNumber:body.property.mlsNumber,address:clean(body.property.address,200)} : null;
+  const search=Object.fromEntries(['location','minPrice','maxPrice','beds','baths','propertyType','bounds','waterfront','minSqft','newListings'].map(key=>[key,clean(body.searchCriteria?.[key],200)]).filter(([,value])=>value));
   const now = new Date().toISOString();
   const goals = body.funnelProfile || {};
   const attribution = { sourceSite: 'homes-around-north-houston', channel: 'website', provider: 'GMS Pro', inquiryType: body.interested_in };
@@ -61,8 +64,8 @@ export default async function handler(req, res) {
     weeklyListingEmailsRequested: body.weeklyListingPreferencePresented === true && body.weeklyListingEmailsRequested === true,
     submissionId, name, email, phone: digits.length === 10 ? `+1${digits}` : `+${digits}`, market: clean(goals.area, 200) || 'North Houston',
     services: [interest], sources: ['Homes Around North Houston website'],
-    notes: `Interest: ${interest}\n${clean(body.message, 2000)}`,
-    pageUrl: `${req.headers.origin}/`, submittedAt: now, attribution,
+    notes: `Interest: ${interest}\n${clean(body.message, 2000)}\n${property ? `Property MLS ${property.mlsNumber} (HAR ${property.boardId}): ${property.address}` : ""}\nSearch: ${JSON.stringify(search)}\nRequest: ${body.requestType === "weekly_matches" ? "Weekly matching homes" : "Real estate inquiry"}`,
+    pageUrl: `${req.headers.origin}${property ? `/property/${property.boardId}/${property.mlsNumber}` : "/homes"}`, submittedAt: now, attribution,
     consent: { accepted: true, version: CONTACT_CONSENT_VERSION, text: CONTACT_CONSENT_TEXT, capturedAt: now, channels: ['phone', 'email'], smsAccepted: false },
     funnelProfile: {
       area: clean(goals.area, 200), budgetRange: clean(goals.budgetRange, 100), timeline: clean(goals.timeline, 100),

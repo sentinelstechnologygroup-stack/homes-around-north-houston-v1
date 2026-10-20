@@ -1,0 +1,61 @@
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import GmsInquiryForm from './GmsInquiryForm';
+import { readHomes,saveHomes,readSearches,saveSearches } from '../../lib/searchStorage';
+import './property-search.css';
+const PropertyMap=lazy(()=>import('./PropertyMap'));
+const empty={location:'Conroe',minPrice:'',maxPrice:'',beds:'',baths:'',propertyType:'',waterfront:'false',newListings:'false',minSqft:'',bounds:''};
+const money=value=>value!=null && Number.isFinite(Number(value))?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(value)):'Price on request';
+const searchKeys=Object.keys(empty);
+async function request(params,signal){const r=await fetch('/api/idx?'+new URLSearchParams(params),{signal});const d=await r.json();if(!r.ok)throw new Error(d.error||'Property search unavailable.');return d;}
+export default function PropertySearch({ compact=false,searchPath='/mls-search' }){
+  const [params,setParams]=useSearchParams(),route=useParams(),navigate=useNavigate();
+  const initial=Object.fromEntries(searchKeys.map(key=>[key,params.get(key)||empty[key]]));
+  if(params.get('city'))initial.location=params.get('city');if(params.get('zip'))initial.location=params.get('zip');
+  const [form,setForm]=useState(initial),[filters,setFilters]=useState(initial),[config,setConfig]=useState(null),[result,setResult]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+  const [page,setPage]=useState(1),[sort,setSort]=useState('updatedOnDesc'),[bounds,setBounds]=useState(''),[saved,setSaved]=useState(readHomes),[searches,setSearches]=useState(readSearches),[view,setView]=useState('all'),[notice,setNotice]=useState(''),[weekly,setWeekly]=useState(false);
+  const title=useRef(null);
+  const detailMode=Boolean(route.mlsNumber),filterKey=JSON.stringify(filters),savedKey=saved.join(',');
+  useEffect(()=>{const c=new AbortController();request({action:'config'},c.signal).then(setConfig).catch(()=>setConfig({enabled:false}));return()=>c.abort();},[]);
+  useEffect(()=>{
+    if(!config?.enabled){setLoading(false);return;}
+    const c=new AbortController();setLoading(true);setError('');setResult(null);
+    let query;
+    if(detailMode)query={action:'detail',boardId:route.boardId,mlsNumber:route.mlsNumber};
+    else if(view==='saved'){
+      const ids=saved.slice(0,12).map(id=>id.split(':')[1]);if(!ids.length){setResult({listings:[],disclosure:''});setLoading(false);return()=>c.abort();}
+      query={ids:ids.join(',')};
+    }else query={...JSON.parse(filterKey),page:String(page),sort};
+    request(query,c.signal).then(setResult).catch(e=>{if(e.name!=='AbortError')setError(e.message);}).finally(()=>{if(!c.signal.aborted)setLoading(false);});
+    return()=>c.abort();
+  },[config,filterKey,page,sort,view,savedKey,detailMode,route.boardId,route.mlsNumber]);
+  useEffect(()=>{try{const incoming=Object.fromEntries(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','gbraid','wbraid','fbclid'].filter(k=>params.has(k)).map(k=>[k,params.get(k).slice(0,200)]));if(Object.keys(incoming).length)sessionStorage.setItem('property-search-attribution',JSON.stringify(incoming));}catch{/* Search never depends on tracking. */}},[params]);
+  function apply(next){setForm(next);setFilters(next);setPage(1);setView('all');setWeekly(false);const query=new URLSearchParams(params);for(const k of searchKeys.concat('bounds'))query.delete(k);for(const [k,v] of Object.entries(next))if(v && v!=='false')query.set(k,v);setParams(query,{replace:true});}
+  function toggleHome(listing){const id=listing.boardId+':'+listing.mlsNumber;const next=saved.includes(id)?saved.filter(x=>x!==id):[id,...saved].slice(0,50);try{saveHomes(next);setSaved(next);setNotice(next.includes(id)?'Home saved on this device.':'Home removed from saved homes.');}catch{setNotice('This browser cannot save homes. Enable site storage to use this feature.');}}
+  function saveSearch(){const next=[{name:(filters.location||'Map area')+' · '+(filters.maxPrice?money(filters.maxPrice)+' max':'Any price'),filters},...searches].slice(0,10);try{saveSearches(next);setSearches(next);setNotice('Search saved on this device.');}catch{setNotice('This browser cannot save searches.');}}
+  function open(listing){navigate(`/property/${listing.boardId}/${listing.mlsNumber}?${params}`);}
+  const listings=result?.listings||[],detail=listings[0];
+  return <div className={'property-search '+(compact?'ps-compact':'')}>
+    <header className="ps-hero"><p className="ps-eyebrow">GOLDEN CROSS REALTY</p><h1 ref={title}>{detailMode?'A place for your next chapter.':compact?'Find your North Houston home.':'Find a place that feels like yours.'}</h1><p>{detailMode?'Explore the details, then let our team help with the next step.':compact?'Explore homes, narrow your search and connect with the local brokerage.':'Explore the map, save your favorites and discover what comes next.'}</p></header>
+    {config?.enabled===false?<div className="ps-panel"><p>On-site search is not available in this environment.</p><a href="https://www.har.com/idx/mls/search?sitetype=aws&cid=605032&allmls=y&for_sale=1&mlsorgid=1" rel="noopener noreferrer" target="_blank">Open the existing property search</a></div>:<>
+    {!detailMode && <>
+      <form className="ps-panel ps-filter" onSubmit={e=>{e.preventDefault();apply(form);}} aria-label="Filter properties">
+        <div className="ps-fields"><label className="ps-location">City, ZIP or MLS number<input value={form.location} onChange={e=>setForm({...form,location:e.target.value})} placeholder="Conroe, 77304, or MLS number" maxLength={100} /></label><label>Min price<input type="number" min="0" step="1000" value={form.minPrice} onChange={e=>setForm({...form,minPrice:e.target.value})} /></label><label>Max price<input type="number" min="0" step="1000" value={form.maxPrice} onChange={e=>setForm({...form,maxPrice:e.target.value})} /></label><label>Beds<select value={form.beds} onChange={e=>setForm({...form,beds:e.target.value})}><option value="">Any</option>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n}+</option>)}</select></label><label>Baths<select value={form.baths} onChange={e=>setForm({...form,baths:e.target.value})}><option value="">Any</option>{[1,2,3,4].map(n=><option key={n} value={n}>{n}+</option>)}</select></label><button className="ps-primary" type="submit">Find homes</button></div>
+        {!compact && <div className="ps-tools"><label>Property class<select value={form.propertyType} onChange={e=>setForm({...form,propertyType:e.target.value})}><option value="">All</option><option value="1">Residential</option><option value="2">Condo</option></select></label><label>Minimum sq ft<input type="number" min="0" value={form.minSqft} onChange={e=>setForm({...form,minSqft:e.target.value})} /></label><label className="ps-check"><input type="checkbox" checked={form.waterfront==='true'} onChange={e=>setForm({...form,waterfront:String(e.target.checked)})} />Waterfront</label><label className="ps-check"><input type="checkbox" checked={form.newListings==='true'} onChange={e=>setForm({...form,newListings:String(e.target.checked)})} />Listed this week</label></div>}
+      </form>
+      <div className="ps-toolbar"><div className="ps-tools"><button type="button" aria-pressed={view==='all'} onClick={()=>setView('all')}>All homes</button>{!compact && <><button type="button" aria-pressed={view==='saved'} onClick={()=>{setView('saved');setPage(1);}}>Saved homes ({saved.length})</button><button type="button" onClick={saveSearch}>Save this search</button></>}<button type="button" onClick={()=>setWeekly(v=>!v)}>Request weekly matches</button></div><label>Sort<select value={sort} onChange={e=>{setSort(e.target.value);setPage(1);}}><option value="updatedOnDesc">Recently updated</option><option value="listPriceAsc">Price: low to high</option><option value="listPriceDesc">Price: high to low</option></select></label></div>
+      {!compact && searches.length>0 && <div className="ps-tools ps-saved" aria-label="Saved searches">{searches.map((s,i)=><span key={i}><button type="button" onClick={()=>apply(s.filters)}>{s.name}</button><button aria-label={'Remove saved search '+s.name} type="button" onClick={()=>{const next=searches.filter((_,j)=>j!==i);try{saveSearches(next);setSearches(next);}catch{setNotice('Unable to update saved searches.');}}}>×</button></span>)}</div>}
+      {notice && <p role="status">{notice}</p>}{!compact && <p className="ps-small">Saved homes and searches stay on this device. Availability is rechecked whenever you open them. Saved-home view shows up to 12 at a time.</p>}
+      {weekly && <GmsInquiryForm filters={filters} weeklyOnly />}
+    </>}
+    <p className="ps-status" role="status" aria-live="polite">{loading?'Finding homes…':error?null:detailMode?'':`${listings.length} homes shown on this page${result?.hasMore?' · more available':''}.`}</p>
+    {error && <div className="ps-panel" role="alert">{error} <Link to={searchPath}>Return to search</Link></div>}
+    {!loading && !error && !listings.length && <p className="ps-panel">No homes are currently available for this search. Try another area or adjust your filters. Saved properties may no longer be available.</p>}
+    {!detailMode && <div className="ps-layout"><section className="ps-map-wrap"><Suspense fallback={<p>Loading map…</p>}><PropertyMap listings={listings} bounded={Boolean(filters.bounds)} onOpen={open} onBounds={setBounds} /></Suspense><div className="ps-tools"><button type="button" onClick={()=>apply({...filters,location:'',bounds})} disabled={!bounds}>Search this map area</button>{filters.bounds && <button type="button" onClick={()=>apply({...filters,bounds:''})}>Clear map area</button>}</div><p className="ps-small">Pins represent homes on the current results page. Address-restricted homes have no map pin.</p></section><section className="ps-grid" aria-label="Property results">{listings.map(l=><article className="ps-card" key={l.boardId+':'+l.mlsNumber}>{l.images[0] && <Link to={`/property/${l.boardId}/${l.mlsNumber}?${params}`}><img src={l.images[0]} alt={l.address} loading="lazy" /></Link>}<div className="ps-card-body"><p className="ps-price">{money(l.price)}</p><h2><Link to={`/property/${l.boardId}/${l.mlsNumber}?${params}`}>{l.address}</Link></h2><p>{l.city} · {l.beds??'—'} beds · {l.baths??'—'} baths</p><p className="ps-broker">Listed by {l.brokerage||'Brokerage unavailable'} · MLS #{l.mlsNumber}</p><div className="ps-tools"><button type="button" onClick={()=>open(l)}>View home</button>{!compact && <button type="button" aria-pressed={saved.includes(l.boardId+':'+l.mlsNumber)} onClick={()=>toggleHome(l)}>{saved.includes(l.boardId+':'+l.mlsNumber)?'♥ Saved':'♡ Save home'}</button>}</div></div></article>)}</section></div>}
+    {!detailMode && view!=='saved' && <div className="ps-tools ps-pagination"><button type="button" disabled={loading||page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><span>Page {page}</span><button type="button" disabled={loading||!result?.hasMore||page>=100} onClick={()=>setPage(p=>p+1)}>Next</button></div>}
+    {detailMode && detail && <article className="ps-detail"><Link to={`${searchPath}?${params}`}>← Back to homes</Link><div className="ps-detail-heading"><div><p className="ps-price">{money(detail.price)}</p><h2>{detail.address}</h2><p>{detail.city} · {detail.beds??'—'} beds · {detail.baths??'—'} baths · {detail.sqft||'—'} sq ft</p></div>{!compact && <button type="button" onClick={()=>toggleHome(detail)}>{saved.includes(detail.boardId+':'+detail.mlsNumber)?'♥ Saved':'♡ Save home'}</button>}</div><div className="ps-gallery">{detail.images.map((src,i)=><img key={src} src={src} alt={detail.address+' — photo '+(i+1)} loading={i?'lazy':'eager'} />)}</div><p className="ps-description">{detail.description}</p><p className="ps-broker">Listed by {detail.brokerage||'Brokerage unavailable'} · MLS #{detail.mlsNumber} · Updated {detail.updatedOn||'Not supplied'}</p><GmsInquiryForm property={detail} filters={filters} /></article>}
+    {result?.disclosure && <p className="ps-disclosure">{result.disclosure} Availability and information should be independently verified.</p>}
+    </>}
+  </div>;
+}
+
