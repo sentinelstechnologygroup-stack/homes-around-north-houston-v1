@@ -1,3 +1,4 @@
+import {searchFilters} from '../server/repliers.js';
 import {CONTACT_CONSENT_TEXT,CONTACT_CONSENT_VERSION} from '../src/lib/contactConsent.js';
 const SITE='north';
 const origins=['https://homesaroundnorthhouston.com','https://www.homesaroundnorthhouston.com'];
@@ -12,7 +13,9 @@ export function validate(body){
  if(body.consentAccepted!==true||body.consentVersion!==CONTACT_CONSENT_VERSION)throw Error('Contact permission is required.');
  const elapsed=Date.now()-Date.parse(body.formStartedAt);if(!Number.isFinite(elapsed)||elapsed<1500||elapsed>86400000)throw Error('Please reload and try again.');
  const s=body.searchCriteria||{},searchCriteria={location:clean(s.location,100),neighborhood:clean(s.neighborhood,100)};
- if(!searchCriteria.location)throw Error('Choose a city or ZIP code.');
+ if(!searchCriteria.location&&!s.polygon&&!s.bounds)throw Error('Choose a city, ZIP code or drawn map area.');
+ const extra=['propertyType','waterfront','newListings','minSqft','bounds','polygon','availability','featuredOnly'];for(const k of extra)if(typeof s[k]==='string'&&s[k])searchCriteria[k]=s[k];
+ searchFilters(searchCriteria,{boards:['147'],mode:'public'});
  for(const k of ['minPrice','maxPrice','beds','baths'])if(s[k]!==''&&s[k]!=null){const n=Number(s[k]);if(!Number.isInteger(n)||n<0||n>(k.endsWith('Price')?100000000:20))throw Error('Check your search preferences.');searchCriteria[k]=String(n);}
  if(searchCriteria.minPrice&&searchCriteria.maxPrice&&Number(searchCriteria.minPrice)>Number(searchCriteria.maxPrice))throw Error('Maximum price must be at least the minimum price.');
  const attribution=Object.fromEntries(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','gbraid','wbraid','fbclid'].map(k=>[k,clean(body.attribution?.[k],200)]));
