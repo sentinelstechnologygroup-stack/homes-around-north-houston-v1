@@ -8,6 +8,8 @@ import MarketReports from './pages/MarketReports'
 import Legal from './pages/Legal'
 import IntentPage from './pages/IntentPage'
 import Seo from './components/Seo'
+import LeadFunnel from './components/LeadFunnel'
+import VerifyContact from './pages/VerifyContact'
 
 export function SiteRoutes() {
   return (
@@ -20,6 +22,7 @@ export function SiteRoutes() {
         <Route path="/buy" element={<IntentPage interest="buying" />} />
         <Route path="/sell" element={<IntentPage interest="selling" />} />
         <Route path="/investment-properties" element={<IntentPage interest="investing" />} />
+        <Route path="/verify" element={<VerifyContact />} />
         <Route path="/homes" element={<Homes />} />
         <Route path="/property/:boardId/:mlsNumber" element={<Homes />} />
         <Route path="/market-reports" element={<MarketReports />} />
@@ -27,6 +30,7 @@ export function SiteRoutes() {
         <Route path="/terms" element={<Legal type="terms" />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      <LeadFunnel />
       <Toaster />
     </>
   )

@@ -8,7 +8,7 @@ import SellersSection from "@/components/landing/SellersSection";
 import InvestmentSection from "@/components/landing/InvestmentSection";
 import MarketReportSection from "@/components/landing/MarketReportSection";
 import WhyChooseUsSection from "@/components/landing/WhyChooseUsSection";
-import LeadFormSection from "@/components/landing/LeadFormSection";
+
 import Footer from "@/components/landing/Footer";
 
 export default function Home() {
@@ -24,7 +24,7 @@ export default function Home() {
       <InvestmentSection />
       <MarketReportSection />
       <WhyChooseUsSection />
-      <LeadFormSection />
+      <section className="bg-[#F1F3F5] py-16 text-center"><h2 className="font-display text-3xl text-[#0A192F] mb-5">Find your place in North Houston</h2><a href="#contact" className="inline-block bg-[#C5A059] text-[#0A192F] rounded-lg px-8 py-4 font-semibold">Get Started</a></section>
       </main>
       <Footer />
     </div>

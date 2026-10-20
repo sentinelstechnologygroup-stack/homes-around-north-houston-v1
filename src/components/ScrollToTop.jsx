@@ -16,6 +16,7 @@ export default function ScrollToTop() {
   const navigationType = useNavigationType();
 
   useEffect(() => {
+    if (hash === '#contact') return;
     if (hash) {
       const id = getHashId(hash);
       const timer = window.setTimeout(() => {
