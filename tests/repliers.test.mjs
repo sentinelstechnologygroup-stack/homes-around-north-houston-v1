@@ -15,7 +15,7 @@ test('default-off and independent licensing/host gates',()=>{
 });
 test('filter mapping, bounds, scope, unsupported criteria',()=>{
  const f=searchFilters({location:'77301',forSale:'0',minPrice:'100',maxPrice:'500',beds:'3',baths:'2',page:'2',propertyType:'2'},config);
- assert.equal(f.zip,'77301');assert.equal(f.type,'lease');assert.equal(f.class,'condo');assert.equal(f.minBedroomsTotal,3);assert.equal(f.pageNum,2);assert.deepEqual(f.mlsNumber,['12345678']);assert.deepEqual(f.boardId,['123']);
+ assert.equal(f.zip,'77301');assert.equal(f.type,'lease');assert.deepEqual(f.style,['Townhouse/Condo,Condominium','Condominium']);assert.equal(Object.hasOwn(f,'class'),false);assert.equal(f.minBedroomsTotal,3);assert.equal(f.pageNum,2);assert.deepEqual(f.mlsNumber,['12345678']);assert.deepEqual(f.boardId,['123']);
  assert.deepEqual(searchFilters({location:'Houston, TX'},config).city,['Houston']);
  for(const input of [{tenantId:'other'},{page:'1001'},{minPrice:'500',maxPrice:'100'},{mlsNumber:'99999999',boardId:'123'},{mlsNumber:'12345678',boardId:'456'},{foreclosures:'true'},{propertyType:'3'},{location:['Houston']},{page:'NaN'}])assert.throws(()=>searchFilters(input,config));
 });
@@ -59,3 +59,56 @@ test('address privacy also removes exact map coordinates',()=>{
  assert.deepEqual(projectListing({...coordinates,permissions:{...fixture.permissions,displayAddressOnInternet:'Y'}},config).coordinates,[30.3,-95.4]);
  assert.equal(projectListing({...coordinates,permissions:{...fixture.permissions,displayPublic:'N'}},config),null);
 });
+
+test('condominium styles reach listing and cluster queries without broadening scope',async()=>{
+ // Repliers /listings documents style as a repeated string parameter, distinct
+ // from class. Repeated values are ORed; different filters remain ANDed.
+ // https://docs.repliers.io/reference/getting-started-with-your-api
+ // https://help.repliers.com/en/article/understanding-operators-in-the-repliers-api-1h2or2x/
+ const har={boards:['147'],mode:'preview',disclosure:'Synthetic HAR test'};
+ const requests=[];
+ const result=await queryListings(searchFilters({propertyType:'2',location:'Houston',forSale:'0',minPrice:'1000',maxPrice:'3000'},har),har,'synthetic',async(url,options)=>{
+  const params=new URL(url).searchParams;requests.push(params);
+  assert.equal(options.method,'POST');
+  return {ok:true,json:async()=>({listings:[],count:0,page:1,numPages:0,aggregates:{map:{clusters:[]}}})};
+ });
+ assert.equal(requests.length,2);
+ for(const params of requests){
+  assert.deepEqual(params.getAll('style'),['Townhouse/Condo,Condominium','Condominium']);
+  assert.equal(params.has('class'),false);
+  assert.equal(params.has('propertyType'),false);
+  assert.equal(params.has('operator'),false);
+  assert.deepEqual(params.getAll('boardId'),['147']);
+  assert.deepEqual(params.getAll('city'),['Houston']);
+  assert.equal(params.get('type'),'lease');
+  assert.equal(params.get('minPrice'),'1000');assert.equal(params.get('maxPrice'),'3000');
+  assert.equal(params.get('displayInternetEntireListing'),'Y');
+  assert.equal(params.get('displayPublic'),'Y');
+ }
+ assert.equal(requests[1].get('cluster'),'true');
+ assert.equal(requests[1].get('displayAddressOnInternet'),'Y');
+ assert.deepEqual(result.listings,[]);
+});
+
+test('condominium selection remains distinct from townhouse and other supported property filters',()=>{
+ const cases=[
+  ['1','propertyType',['Residential']],
+  ['2','style',['Townhouse/Condo,Condominium','Condominium']],
+  ['single_family','style',['Single Family Residence']],
+  ['townhouse','style',['Townhouse/Condo,Townhouse']],
+  ['multifamily','propertyType',['Residential Income']],
+  ['land','propertyType',['Land']],
+  ['acreage','propertyType',['Farm']],
+ ];
+ for(const [propertyType,param,values] of cases){
+  const filters=searchFilters({propertyType},config);
+  assert.deepEqual(filters[param],values,propertyType);
+  assert.equal(Object.hasOwn(filters,'class'),false);
+  assert.equal(Object.hasOwn(filters,param==='style'?'propertyType':'style'),false);
+  assert.deepEqual(filters.mlsNumber,['12345678']);
+  assert.equal(filters.displayPublic,'Y');
+ }
+ const unfiltered=searchFilters({},config);
+ for(const key of ['class','style','propertyType'])assert.equal(Object.hasOwn(unfiltered,key),false);
+});
+
