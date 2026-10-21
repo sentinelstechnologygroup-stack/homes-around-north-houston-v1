@@ -1,4 +1,4 @@
-export function readableDisclosure(value){const text=String(value||'').trim();return text.length<=1500 && /[ .]/.test(text) && !/^[A-Za-z0-9+/_=-]{80,}$/.test(text)?text:'Listing data supplied by the Houston Association of REALTORS® (HAR). Information is deemed reliable but not guaranteed.';}
+export function readableDisclosure(value){const text=String(value||'').trim();return text.length<=1500 && /[ .]/.test(text) && !/^[A-Za-z0-9+/_=-]{80,}$/.test(text)?text:'Listing data supplied by the Houston Association of REALTORSÂ® (HAR). Information is deemed reliable but not guaranteed.';}
 import {ringFrom,intersectBox} from './search-geometry.js';
 import {propertyDetails} from './property-details.js';
 import {listingHighlights} from './listing-highlights.js';
@@ -16,13 +16,14 @@ export function configuration(env, host) {
 }
 const validId = value => /^[A-Za-z0-9-]{1,50}$/.test(String(value));
 export function searchFilters(input, config) {
-  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom','featuredOnly']);
+  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom','featuredOnly','minLotSqft','maxLotSqft']);
   for (const key of Object.keys(input)) if (!permitted.has(key)) throw new Error('Unsupported filter.');
   for (const value of Object.values(input)) if (Array.isArray(value) || typeof value === 'object') throw new Error('Invalid filter.');
   if (input.foreclosures === true || input.foreclosures === 'true') throw new Error('Foreclosure filtering is not available.');
   if (input.forSale && !['0','1'].includes(input.forSale)) throw new Error('Invalid search type.');
-  const filters = { standardStatus: input.availability === 'active' ? ['Active','Active Under Contract'] : ['Active','Active Under Contract','Pending','Coming Soon'], displayInternetEntireListing: 'Y', displayPublic: 'Y', type: input.forSale === '0' ? 'lease' : 'sale', resultsPerPage: 48, pageNum: 1, sortBy: 'updatedOnDesc', boardId: config.boards };
-  for (const [key, param, maximum] of [['minPrice','minPrice',100000000],['maxPrice','maxPrice',100000000],['beds','minBedroomsTotal',20],['baths','minBaths',20],['page','pageNum',1000],['minSqft','minSqft',100000]]) {
+  const statuses={all:['Active','Active Under Contract','Pending','Coming Soon'],active:['Active','Active Under Contract'],active_only:['Active'],under_contract:['Active Under Contract'],pending:['Pending'],coming_soon:['Coming Soon']};
+  const filters = { standardStatus: statuses[input.availability||'all']||statuses.all, displayInternetEntireListing: 'Y', displayPublic: 'Y', type: input.forSale === '0' ? 'lease' : 'sale', resultsPerPage: 48, pageNum: 1, sortBy: 'updatedOnDesc', boardId: config.boards };
+  for (const [key, param, maximum] of [['minPrice','minPrice',100000000],['maxPrice','maxPrice',100000000],['beds','minBedroomsTotal',20],['baths','minBaths',20],['page','pageNum',1000],['minSqft','minSqft',100000],['minLotSqft','minLotSizeSqft',435600000],['maxLotSqft','maxLotSizeSqft',435600000]]) {
     if (input[key] !== undefined && input[key] !== '') {
       const n = Number(input[key]); if (!Number.isInteger(n) || n < (key === 'page' ? 1 : 0) || n > maximum) throw new Error('Invalid numeric filter.');
       filters[param] = n;
@@ -33,7 +34,7 @@ export function searchFilters(input, config) {
   if (input.newListings === 'true') filters.minListDate = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
   if (input.openHouses === 'true') filters.minOpenHouseDate = new Date().toISOString().slice(0,10);
   if(input.mapZoom){const zoom=Number(input.mapZoom);if(!Number.isInteger(zoom)||zoom<1||zoom>22)throw new Error('Invalid map zoom.');filters._mapZoom=zoom;}
-  if(input.availability && !['all','active'].includes(input.availability))throw new Error('Invalid availability.');
+  if(input.availability && !Object.hasOwn(statuses,input.availability))throw new Error('Invalid availability.');
   if(input.pageSize){if(!['48','96','50','100'].includes(String(input.pageSize)))throw new Error('Choose 48 or 96 homes per page.');filters.resultsPerPage=Number(input.pageSize);}
   let drawn=input.polygon ? ringFrom(input.polygon) : null;
   if (input.bounds) {
@@ -44,10 +45,11 @@ export function searchFilters(input, config) {
   }
   if(drawn)filters.map=JSON.stringify([drawn]);
   if (input.sort) { if (!['updatedOnDesc','updatedOnAsc','createdOnDesc','createdOnAsc','listPriceAsc','listPriceDesc','sqftAsc','sqftDesc','yearBuiltAsc','yearBuiltDesc','addressAsc','addressDesc','lotSizeAsc','lotSizeDesc'].includes(input.sort)) throw new Error('Invalid sort.'); filters.sortBy = input.sort; }
+  if(filters.minLotSizeSqft>filters.maxLotSizeSqft)throw new Error('Minimum lot size exceeds maximum.');
   if (input.propertyType) {
-    // Only mappings confirmed by the provider's normalized classes are supported.
-    if (!['1','2'].includes(input.propertyType)) throw new Error('Use HAR for this property type during the pilot.');
-    filters.class = input.propertyType === '2' ? 'condo' : 'residential';
+    const types={'1':{propertyType:['Residential']},'2':{style:['Townhouse/Condo,Condominium','Condominium']},single_family:{style:['Single Family Residence']},townhouse:{style:['Townhouse/Condo,Townhouse']},multifamily:{propertyType:['Residential Income']},land:{propertyType:['Land']},acreage:{propertyType:['Farm']}};
+    if(!Object.hasOwn(types,input.propertyType))throw new Error('Invalid property type.');
+    Object.assign(filters,types[input.propertyType]);
   }
   if(input.neighborhood){if(String(input.neighborhood).length>100)throw new Error('Neighborhood is too long.');filters.neighborhood=[String(input.neighborhood).trim()];}
 
@@ -89,7 +91,7 @@ export function projectListing(listing, config, detailed=false) {
     beds: listing.details?.numBedrooms, baths: listing.details?.numBathrooms, sqft: listing.details?.sqft, coordinates,
     description: listing.permissions?.displayAddressOnInternet === 'Y' ? listing.details?.description || '' : '', brokerage: listing.office?.brokerageName || '',
     updatedOn: listing.updatedOn || '', standardStatus: listing.standardStatus || 'Active', yearBuilt: listing.details?.yearBuilt || null, lotSqft: listing.lot?.squareFeet ?? null, lotAcres: listing.lot?.acres ?? null,
-    ...(detailed?{propertyDetails:propertyDetails(listing)}:{}),
+    ...(detailed?{propertyDetails:propertyDetails(listing),listingContact:(listing.agents||[]).map(a=>String(a.email||'')).find(email=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))||''}:{}),
     images: (listing.images || []).slice(0,detailed?150:12).filter(p => typeof p === 'string' && /^[A-Za-z0-9_./-]+$/.test(p) && !p.includes('..')).map(p => `https://cdn.repliers.io/${p}`),
   };
 }
