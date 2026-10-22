@@ -1,20 +1,28 @@
 # Launch review — October 22, 2026
 
-## Code and deployment verification
+## Completed verification
 
-- [ ] Deploy the reviewed commit to each existing project; verify the custom host serves that commit.
-- [ ] Verify open search, sorting, pagination, drawing/clear/reset, geographic outlines, map thumbnail previews, saved-home sign-in, and property pages on desktop and mobile.
-- [ ] Run a clearly labeled controlled inquiry. North Houston must route through GMS; Golden Cross must route directly to broker@goldencrossrealty.com. Verify receipt, search-link email, unsubscribe, and downstream record. Calls remain pending client approval.
-- [ ] Verify configured GA4/GTM, Google Ads conversion and Meta IDs with consent denied and granted. Prevent duplicate conversions and exclude controlled tests. Source-code integration alone does not prove account configuration or delivery.
-- [ ] Check HTTPS, robots.txt, sitemap.xml, canonical tags, real 404 response, verification route, and Search Console ownership/submission.
-- [ ] Review branding, brokerage disclosures, data attribution, privacy and terms with the client/broker.
+- [x] Lint, typecheck and production builds pass for both sites. North Houston: 58 tests; Golden Cross: 56 tests plus two isolated emulator tests for verified cross-device saves and owner-only access. Follow-up search-link tests cover rentals, legacy parameters and unsupported requests.
+- [x] Reviewed changes deployed to both existing production projects; public custom hosts serve the release. Both APIs returned the same total and 48 displayed listings for identical ZIP 77375/status filters, without protection failures.
+- [x] Controlled North Houston/GMS and Golden Cross/direct-brokerage inquiries verified, including rich listing emails delivered, saved records, search links and duplicate suppression. Controlled tests do not trigger ad conversions. Calls remain off pending client approval.
+- [x] HTTPS, public robots/sitemaps and rendered canonical metadata verified. North Houston /verify is noindex; Golden Cross has no corresponding public verification page. Golden Cross .com canonical remains prepared pending the actual domain cutover.
+- [x] Separate analytics/advertising consent defaults denied; GPC disables advertising. GA4 direct integration verified with consent and live activity observed on both properties. generate_lead is configured as a key event; empty GTM version 2 published. Google enhanced measurement is disabled to avoid duplicate or unintended form tracking.
+- [x] North Houston property 560371570 / G-33QVQ2VYBQ / GTM-5G98B8KK. Golden Cross property 560415682 / G-RQXPGVL4L8 / GTM-PPVG9WW6.
+
+## Remaining launch approvals and operating setup
+
+- [ ] Final desktop/mobile browser review of map resizing, drawing/reset, geographic outlines, listing previews, sign-in and property details after the final display refinements.
+- [ ] Google Ads and Meta conversions are not connected: account choice/sign-in and verified conversion/pixel configuration remain pending. No spend is enabled.
+- [ ] Normal weekly email delivery stays disabled. Approve postal sender details and campaign content, then configure the delivery schedule and review capacity/costs. Controlled rich-email tests passed; this is not evidence of an active weekly schedule.
+- [ ] Client/broker approval of branding, disclosures, attribution, privacy/terms and qualification workflow. Calls remain pending that approval.
+- [ ] Search Console ownership and sitemap submission, plus the separate .com domain cutover below.
 
 ## Domain cutover — external release steps
 
 - [ ] Attach GoldenCrossRealty.com and www to the intended new project and confirm DNS/TLS. Existing .com currently serves the earlier site; canonical preparation does not migrate it.
 - [ ] Verify .com search, inquiries, sign-in links and email URLs before enabling .net and www redirects. Preserve paths and query parameters. Do not alter mail DNS.
 - [ ] Activate the separately prepared host redirects only after .com is healthy; test one-hop redirects without loops. The supplied cutover preparation command does not activate anything.
-- [ ] Keep Homes Around North Houston canonical at https://www.homesaroundnorthhouston.com and validate its apex redirect.
+- [x] Keep Homes Around North Houston canonical at https://www.homesaroundnorthhouston.com and validate its apex redirect.
 
 ## Broker policy and inventory scope — not code defects
 
