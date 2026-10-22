@@ -1,3 +1,4 @@
+import {trackAcceptedLead,controlledTest} from '../../lib/campaignTracking';
 import CompactPreferences from './CompactPreferences';
 import React, { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
@@ -132,7 +133,7 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok || result.accepted !== true || !result.reference) throw new Error(result.error || "We could not confirm receipt. Please contact the Golden Cross Realty office before submitting again.")
-      setReference(result.reference)
+      trackAcceptedLead({receiptId:result.reference,testOnly:controlledTest(form.name),area:form.city||form.zip});setReference(result.reference)
       if (!result.sessionId || !result.sessionToken) throw new Error('Contact capture is not available yet. Please try again later.')
       setSession({ sessionId: result.sessionId, sessionToken: result.sessionToken })
       funnelEvent('contact_captured')

@@ -15,7 +15,7 @@ test('default-off and independent licensing/host gates',()=>{
 });
 test('filter mapping, bounds, scope, unsupported criteria',()=>{
  const f=searchFilters({location:'77301',forSale:'0',minPrice:'100',maxPrice:'500',beds:'3',baths:'2',page:'2',propertyType:'2'},config);
- assert.equal(f.zip,'77301');assert.equal(f.type,'lease');assert.equal(f.class,'condo');assert.equal(f.minBedroomsTotal,3);assert.equal(f.pageNum,2);assert.deepEqual(f.mlsNumber,['12345678']);assert.deepEqual(f.boardId,['123']);
+ assert.equal(f.zip,'77301');assert.equal(f.type,'lease');assert.deepEqual(f.style,['Townhouse/Condo,Condominium','Condominium']);assert.equal(f.minBedroomsTotal,3);assert.equal(f.pageNum,2);assert.deepEqual(f.mlsNumber,['12345678']);assert.deepEqual(f.boardId,['123']);
  assert.deepEqual(searchFilters({location:'Houston, TX'},config).city,['Houston']);
  for(const input of [{tenantId:'other'},{page:'1001'},{minPrice:'500',maxPrice:'100'},{mlsNumber:'99999999',boardId:'123'},{mlsNumber:'12345678',boardId:'456'},{foreclosures:'true'},{propertyType:'3'},{location:['Houston']},{page:'NaN'}])assert.throws(()=>searchFilters(input,config));
 });

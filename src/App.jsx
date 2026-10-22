@@ -1,3 +1,4 @@
+import CampaignConsent from './components/CampaignConsent';
 import { Toaster } from "@/components/ui/toaster"
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import PageNotFound from './lib/PageNotFound'
@@ -16,7 +17,7 @@ export function SiteRoutes() {
     <>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:p-3">Skip to content</a>
       <Seo />
-      <ScrollToTop />
+      <ScrollToTop /><CampaignConsent />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/buy" element={<IntentPage interest="buying" />} />

@@ -1,8 +1,8 @@
+import {parseRequestBody,localRate,beginIntake,finishIntake,uncertainIntake,verifyBotToken,sendRequestError,RequestError} from '../server/request-security.js';
 import {searchFilters} from '../server/repliers.js';
 import {CONTACT_CONSENT_TEXT,CONTACT_CONSENT_VERSION} from '../src/lib/contactConsent.js';
 const SITE='north';
 const origins=['https://homesaroundnorthhouston.com','https://www.homesaroundnorthhouston.com'];
-const attempts=new Map();
 export const config={maxDuration:120};
 const clean=(v,n=200)=>typeof v==='string'?v.trim().slice(0,n):'';
 export function validate(body){
@@ -22,11 +22,11 @@ export function validate(body){
  return {site:SITE,submissionId:body.submissionId,name,email,phone:digits.length===10?'+1'+digits:'+'+digits,searchCriteria,weekly:body.weeklyListingPreferencePresented===true&&body.weeklyListingEmailsRequested===true,consent:{accepted:true,text:CONTACT_CONSENT_TEXT,version:CONTACT_CONSENT_VERSION,capturedAt:new Date().toISOString(),smsAccepted:false},services:['Buying'],sources:[SITE==='north'?'Homes Around North Houston website':'Golden Cross Realty website'],attribution:{...attribution,sourceSite:SITE==='north'?'homes-around-north-houston':'golden-cross-realty'},testOnly:email==='patrick.camacho1@gmail.com'&&name.startsWith('CONTROLLED TEST')};
 }
 export default async function handler(req,res){
- res.setHeader('Cache-Control','no-store');if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({error:'POST required'});}
+ res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Cache-Control','no-store');if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({error:'POST required'});}
  if(!origins.includes(req.headers.origin))return res.status(403).json({error:'Origin not allowed'});
- if(!String(req.headers['content-type']||'').includes('application/json'))return res.status(415).json({error:'JSON required'});
- const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'unknown').split(',')[0],now=Date.now();for(const[k,v]of attempts)if(now-v.at>600000)attempts.delete(k);const count=attempts.get(ip)||{at:now,count:0};count.count++;if(attempts.size>=2000&&!attempts.has(ip)||count.count>8)return res.status(429).json({error:'Please wait before sending another request.'});attempts.set(ip,count);
- let payload;try{const b=typeof req.body==='string'?JSON.parse(req.body):req.body;payload=validate(b);}catch(e){return res.status(400).json({error:e.message||'Invalid inquiry.'});}
+ let body,payload;try{body=parseRequestBody(req,15000);localRate(req,'search-inquiry',8);payload=validate(body);}catch(e){return sendRequestError(res,e);}
  if(!process.env.GMS_SEARCH_INTAKE_TOKEN||!process.env.GMS_SEARCH_INTAKE_URL)return res.status(503).json({error:'Matching-home requests are temporarily unavailable. You can still browse Search Homes.'});
- try{const r=await fetch(process.env.GMS_SEARCH_INTAKE_URL,{method:'POST',redirect:'error',headers:{'Content-Type':'application/json',Authorization:`Bearer ${process.env.GMS_SEARCH_INTAKE_TOKEN}`},body:JSON.stringify(payload),signal:AbortSignal.timeout(105000)});const d=await r.json();if(!r.ok||!d.accepted||!d.leadId)throw Error('Receipt not confirmed');return res.status(202).json({accepted:true,reference:d.leadId,searchUrl:d.searchUrl,emailStatus:d.emailStatus});}catch{return res.status(502).json({error:'We could not confirm receipt. Please contact the office before submitting again.'});}
+ let guard;try{await verifyBotToken(body,req.headers.origin);guard=await beginIntake(req,{site:SITE,scope:'search',body,submissionId:payload.submissionId});if(guard.replay)return res.status(guard.replay.status).json(guard.replay.body);
+ const r=await fetch(process.env.GMS_SEARCH_INTAKE_URL,{method:'POST',redirect:'error',headers:{'Content-Type':'application/json',Authorization:`Bearer ${process.env.GMS_SEARCH_INTAKE_TOKEN}`},body:JSON.stringify(payload),signal:AbortSignal.timeout(90000)});const d=await r.json();if(!r.ok||!d.accepted||!d.leadId)throw Error('Receipt not confirmed');const receipt={accepted:true,reference:d.leadId,searchUrl:d.searchUrl,emailStatus:d.emailStatus};await finishIntake(guard,'complete',{status:202,body:receipt});return res.status(202).json(receipt);
+ }catch(error){await uncertainIntake(guard);if(error instanceof RequestError)return sendRequestError(res,error);return res.status(502).json({error:'We could not confirm receipt. Please contact the office before submitting again.'});}
 }

@@ -1,3 +1,4 @@
+import {listingImageUrl} from '../../lib/listingImages';
 import {useEffect,useRef,useState} from 'react';
 import {closeStroke} from '../../lib/drawnArea';
 import 'leaflet/dist/leaflet.css';
@@ -22,7 +23,7 @@ export default function PropertyMap({listings,clusters=[],onOpen,onBounds,onSear
  });return()=>{cancelled=true;resizeObserver.current?.disconnect();clearTimeout(timer.current);for(const c of previewRequests.current)c.abort();map.current?.remove();map.current=null;};},[readOnly]);
  function popup(marker,home){
   const box=document.createElement('div');box.className='ps-map-preview';box.textContent='Loading home…';marker.bindPopup(box,{minWidth:220,maxWidth:270,autoPanPadding:[24,24]}).openPopup();
-  const render=l=>{box.replaceChildren();if(l.images?.[0]){const img=document.createElement('img');img.src=l.images[0];img.alt=l.address;box.append(img);}const info=document.createElement('div');info.className='ps-map-preview-info';
+  const render=l=>{box.replaceChildren();if(l.images?.[0]){const img=document.createElement('img');img.src=listingImageUrl(l.images[0],'small');img.decoding='async';img.alt=l.address;box.append(img);}const info=document.createElement('div');info.className='ps-map-preview-info';
    for(const [tag,value]of [['strong',money(l.price)],['h3',l.address],['p',[l.city,l.beds!=null?l.beds+' beds':'',l.baths!=null?l.baths+' baths':''].filter(Boolean).join(' · ')]]){const el=document.createElement(tag);el.textContent=value;info.append(el);}
    const button=document.createElement('button');button.type='button';button.textContent='View home';button.onclick=()=>callbacks.current.onOpen(l);info.append(button);box.append(info);marker.getPopup()?.update();};
   if(home.images?.length){render(home);return;}

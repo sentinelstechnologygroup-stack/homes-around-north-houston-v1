@@ -1,24 +1,10 @@
+import {parseRequestBody,localRate,beginIntake,finishIntake,uncertainIntake,verifyBotToken,sendRequestError,RequestError} from '../server/request-security.js';
 import { createHash } from 'node:crypto';
 import { CONTACT_CONSENT_TEXT, CONTACT_CONSENT_VERSION } from '../src/lib/contactConsent.js';
 
 const clean = (value, max = 200) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 const interests = { buying: 'Buying', selling: 'Selling', investing: 'Investment Properties', buying_and_selling: 'Buying & Selling' };
-// Best-effort per-instance throttling; configure platform rate limits before launch.
-const attempts = new Map();
 export const config = { maxDuration: 120 };
-function throttled(req) {
-  let input = req.body;
-  if (typeof input === 'string') { try { input = JSON.parse(input) } catch { input = {} } }
-  const activity = ['active','hidden','exit','complete','verify_email','verify_sms'].includes(input?.funnelAction);
-  const ip = `${activity ? 'session' : 'capture'}:${clean(String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0], 100)}`;
-  const now = Date.now();
-  for (const [key, entry] of attempts) if (now - entry.started > 600000) attempts.delete(key);
-  const entry = attempts.get(ip) || { started: now, count: 0 };
-  entry.count++;
-  if (attempts.size >= 2000 && !attempts.has(ip)) return true;
-  attempts.set(ip, entry);
-  return entry.count > (activity ? 180 : 10);
-}
 const allowedOrigins = ['https://homes-around-north-houston-v1.vercel.app', 'https://homesaroundnorthhouston.com', 'https://www.homesaroundnorthhouston.com'];
 
 export default async function handler(req, res) {
@@ -31,13 +17,8 @@ export default async function handler(req, res) {
   const origins = (process.env.ALLOWED_ORIGINS || allowedOrigins.join(',')).split(',').map(item => item.trim());
   if(process.env.VERCEL_ENV==='preview' && process.env.VERCEL_URL) origins.push('https://'+process.env.VERCEL_URL);
   if (!req.headers.origin || !origins.includes(req.headers.origin)) return res.status(403).json({ error: 'Origin not allowed' });
-  if (!String(req.headers['content-type'] || '').includes('application/json')) return res.status(415).json({ error: 'JSON required' });
-  if (throttled(req)) return res.status(429).json({ error: 'Please wait before submitting another inquiry.' });
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch { return res.status(400).json({ error: 'Invalid request' }); }
-  }
-  if (!body || typeof body !== 'object' || JSON.stringify(body).length > 20000) return res.status(400).json({ error: 'Invalid request' });
+  let body;
+  try { body=parseRequestBody(req,20000);const activity=['active','hidden','exit','complete','verify_email','verify_sms'].includes(body.funnelAction);localRate(req,activity?'lead-session':'lead-capture',activity?180:10); } catch(error){return sendRequestError(res,error);}
   if (clean(body.website_check)) return res.status(400).json({ error: 'Invalid request' });
   if (['active','hidden','exit','complete','verify_email','verify_sms'].includes(body.funnelAction)) {
     if (!/^[a-f0-9]{64}$/.test(body.sessionId || '') || !/^[a-f0-9]{64}$/.test(body.sessionToken || '')) return res.status(400).json({ error: 'Invalid session' });
@@ -47,7 +28,7 @@ export default async function handler(req, res) {
     funnelProfile.message = clean(goals.message, 2000);
     funnelProfile.weeklyListingPreferencePresented = goals.weeklyListingPreferencePresented === true;
     funnelProfile.weeklyListingEmailsRequested = goals.weeklyListingPreferencePresented === true && goals.weeklyListingEmailsRequested === true;
-    return forward({ funnelAction: body.funnelAction, sessionId: body.sessionId, sessionToken: body.sessionToken, funnelProfile, funnelTelemetry: body.funnelTelemetry }, res, req.headers.origin);
+    return forward({ funnelAction: body.funnelAction, sessionId: body.sessionId, sessionToken: body.sessionToken, funnelProfile, funnelTelemetry: body.funnelTelemetry }, res, req.headers.origin, req, body);
   }
   const submissionId = clean(body.submissionId, 80);
   if (!/^[a-f0-9-]{36}$/i.test(submissionId)) return res.status(400).json({ error: 'Please reload the page and try again.' });
@@ -87,10 +68,10 @@ export default async function handler(req, res) {
     },
   };
   if (body.funnelAction === 'capture') { lead.funnelAction = 'capture'; lead.funnelTelemetry = body.funnelTelemetry; }
-  return forward(lead, res, req.headers.origin);
+  return forward(lead, res, req.headers.origin, req, body);
 }
 
-async function forward(lead, res, origin) {
+async function forward(lead, res, origin, req, body) {
   const webhook = process.env.LEAD_WEBHOOK_URL;
   const token = process.env.LEAD_WEBHOOK_TOKEN;
   const route = process.env.GMS_LEAD_ROUTE_KEY;
@@ -101,18 +82,21 @@ async function forward(lead, res, origin) {
     if (!controlledPreview) return res.status(503).json({ error: 'Controlled intake is available only in the preview.' });
     lead.isTest = true;
   }
+  let guard;
   try {
+    const session=!lead.submissionId;if(!session)await verifyBotToken(body,origin);
+    guard=await beginIntake(req,{site:'north',scope:session?'session':'lead',body,submissionId:lead.submissionId,rateOnly:session});if(guard.replay)return res.status(guard.replay.status).json(guard.replay.body);
     const upstream = await fetch(webhook, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-gms-route-key': route, ...(controlledPreview ? {'x-gms-preview-origin': origin} : {}), 'idempotency-key': createHash('sha256').update(`${route}:${lead.submissionId || lead.sessionId}`).digest('hex') },
+      method: 'POST', redirect:'error', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-gms-route-key': route, ...(controlledPreview ? {'x-gms-preview-origin': origin} : {}), 'idempotency-key': createHash('sha256').update(`${route}:${lead.submissionId || lead.sessionId}`).digest('hex') },
       body: JSON.stringify(lead), signal: AbortSignal.timeout(controlledPreview ? 105000 : 12000),
     });
-    if (upstream.status === 409 || upstream.status === 404) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });
+    if (upstream.status === 409 || upstream.status === 404) {await uncertainIntake(guard);return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });}
     const result = await upstream.json().catch(() => ({}));
-    if (controlledPreview && upstream.status === 403) return res.status(403).json({ error: 'Controlled preview: use the designated test email. This test may also have expired.' });
+    if (controlledPreview && upstream.status === 403) {await uncertainIntake(guard);return res.status(403).json({ error: 'Controlled preview: use the designated test email. This test may also have expired.' });}
     if (!upstream.ok || result.accepted !== true || !result.leadId) throw new Error('Intake not confirmed');
-    return res.status(202).json({ accepted: true, reference: result.leadId,
-      ...(lead.funnelAction ? { sessionId: result.sessionId, sessionToken: result.sessionToken, state: result.state } : {}) });
-  } catch {
+    const receipt={ accepted: true, reference: result.leadId,...(lead.funnelAction ? { sessionId: result.sessionId, sessionToken: result.sessionToken, state: result.state } : {}) };
+    await finishIntake(guard,'complete',{status:202,body:receipt});return res.status(202).json(receipt);
+  } catch(error) {await uncertainIntake(guard);if(error instanceof RequestError)return sendRequestError(res,error);
     return res.status(502).json({ error: 'We could not confirm receipt. Please contact the Golden Cross Realty office before submitting again.' });
   }
 }
