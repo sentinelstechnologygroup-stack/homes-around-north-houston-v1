@@ -34,3 +34,13 @@ Optional server-side Turnstile validation is prepared: setting `TURNSTILE_SECRET
 ## Verification
 
 Pure guard tests cover concurrent duplicates, confirmed response replay, fingerprint conflicts, source isolation, rate-window expiry, wrong claim ownership and ambiguous-delivery holds. Website tests cover byte/depth/prototype rejection, HMAC privacy, required fail-closed behavior, Turnstile hostname verification, and handler-level one-send/idempotent replay for generic and matching-home forms. No live messages are sent by these tests.
+
+## Release smoke check for the generic contact popup
+
+Generic contact uses LEAD_WEBHOOK_URL / LEAD_WEBHOOK_TOKEN / GMS_LEAD_ROUTE_KEY independently of the matching-home email endpoint. A successful build or search-email test does not establish that this separate intake route is ready.
+
+Run `node scripts/check-contact-intake.mjs --env-only` in the protected production build/release environment to fail on missing settings; run without `--env-only` as the release smoke check. Use deployment/CI-injected secrets. Sensitive Vercel production values cannot be pulled with the CLI; do not replace them with empty local values or put secrets in shell command arguments. This standalone check does not change the build command or contact visitors.
+
+The smoke request contains only `{}` and the existing server authentication/route headers. Success means the backend passed authentication and route readiness and then rejected the deliberately absent contact details with HTTP 400. It creates no lead, message or call. HTTP 404/409 indicates an unavailable route/readiness gate; resolve legitimate readiness evidence without fabricating approval or removing safeguards. Output never prints tokens or request headers.
+
+October 22 contact-popup investigation: all production settings were present. Historical ingestWebsiteLead HTTP 409 responses occurred at 21:00, 21:01 and 21:15 UTC, before the readiness evidence was renewed at 21:17:38 UTC. This timing supports the earlier screenshot's route-readiness failure, although historical logs do not retain its exact rejection body. Current controlled capture and completion both returned 202; the saved lead and notification were verified with communications suppressed and zero contact attempts. No approval or route flags were changed during diagnosis.
