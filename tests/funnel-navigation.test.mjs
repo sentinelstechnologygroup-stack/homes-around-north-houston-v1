@@ -22,6 +22,6 @@ test('property inquiries retain the selected property and existing search',()=>{
 test('general inquiries have no invented search and use the single office consent',()=>{
  const defaults=campaignDefaults(new URLSearchParams());
  assert.equal(defaults.city,'');assert.equal(defaults.mlsNumber,'');
- assert.equal(CONTACT_CONSENT_TEXT,'I agree that Golden Cross Realty and its office support team may contact me by phone and email about this real estate inquiry.');
+ assert.match(CONTACT_CONSENT_TEXT,/^By submitting,.*Golden Cross Realty and its office support team/);
  assert.doesNotMatch(CONTACT_CONSENT_TEXT,/GMS|SMS/);
 });

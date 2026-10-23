@@ -1,6 +1,6 @@
 import {parseRequestBody,localRate,beginIntake,finishIntake,uncertainIntake,verifyBotToken,sendRequestError,RequestError} from '../server/request-security.js';
 import { createHash } from 'node:crypto';
-import { CONTACT_CONSENT_TEXT, CONTACT_CONSENT_VERSION } from '../src/lib/contactConsent.js';
+import { contactAcknowledgement } from '../src/lib/contactConsent.js';
 
 const clean = (value, max = 200) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 const interests = { buying: 'Buying', selling: 'Selling', investing: 'Investment Properties', buying_and_selling: 'Buying & Selling' };
@@ -40,7 +40,8 @@ export default async function handler(req, res) {
   if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || digits.length < 10 || digits.length > 15 || !interest) {
     return res.status(400).json({ error: 'Enter your name, valid email and phone number, and interest.' });
   }
-  if (body.consentAccepted !== true || body.consentVersion !== CONTACT_CONSENT_VERSION) return res.status(400).json({ error: 'Contact permission is required.' });
+  const acknowledgement=contactAcknowledgement(body);
+  if (!acknowledgement) return res.status(400).json({ error: 'Please reload the form and try again.' });
   const started = Date.parse(body.formStartedAt);
   const elapsed = Date.now() - started;
   if (!Number.isFinite(elapsed) || elapsed < 1500 || elapsed > 86400000) return res.status(400).json({ error: 'Please reload the page and try again.' });
@@ -59,7 +60,7 @@ export default async function handler(req, res) {
     services: [interest], sources: ['Homes Around North Houston website'],
     notes: `Interest: ${interest}\n${clean(body.message, 2000)}\nSearch/property context: ${JSON.stringify(Object.fromEntries(['location','city','zip','minPrice','maxPrice','beds','baths','boardId','mlsNumber','propertyAddress'].map(key=>[key,clean(goals[key],key==='polygon'?6000:200)]).filter(([,value])=>value)))}`,
     pageUrl: `${req.headers.origin}/`, submittedAt: now, attribution,
-    consent: { accepted: true, version: CONTACT_CONSENT_VERSION, text: CONTACT_CONSENT_TEXT, capturedAt: now, channels: ['phone', 'email'], smsAccepted: false },
+    consent: { ...acknowledgement, capturedAt: now },
     funnelProfile: {
       area: clean(goals.area, 200), budgetRange: clean(goals.budgetRange, 100), timeline: clean(goals.timeline, 100),
       propertyType: clean(goals.propertyType, 100), workingWithAgent: clean(goals.workingWithAgent, 30), financingStatus: clean(goals.financingStatus, 100),
@@ -94,6 +95,12 @@ async function forward(lead, res, origin, req, body) {
     const result = await upstream.json().catch(() => ({}));
     if (controlledPreview && upstream.status === 403) {await uncertainIntake(guard);return res.status(403).json({ error: 'Controlled preview: use the designated test email. This test may also have expired.' });}
     if (!upstream.ok || result.accepted !== true || !result.leadId) throw new Error('Intake not confirmed');
+    if (lead.submissionId && process.env.INQUIRY_GHL_ENABLED === 'true') {
+      const p=lead.funnelProfile;
+      const inquiry=await fetch(process.env.GMS_SEARCH_INTAKE_URL,{method:'POST',redirect:'error',headers:{'Content-Type':'application/json',Authorization:`Bearer ${process.env.GMS_SEARCH_INTAKE_TOKEN}`},body:JSON.stringify({action:'inquiry_email',site:'north',submissionId:lead.submissionId,name:lead.name,email:lead.email,phone:lead.phone,interest:lead.services[0],message:clean(body.message,2000)||clean(p.message,2000),property:p.boardId&&p.mlsNumber?{boardId:p.boardId,mlsNumber:p.mlsNumber,address:p.propertyAddress}:null,searchCriteria:body.searchCriteria||{},weekly:lead.weeklyListingEmailsRequested,consent:lead.consent}),signal:AbortSignal.timeout(90000)});
+      const delivery=await inquiry.json().catch(()=>({}));
+      if(!inquiry.ok || delivery.accepted!==true || !delivery.reference)throw new Error('GoHighLevel inquiry receipt not confirmed');
+    }
     const receipt={ accepted: true, reference: result.leadId,...(lead.funnelAction ? { sessionId: result.sessionId, sessionToken: result.sessionToken, state: result.state } : {}) };
     await finishIntake(guard,'complete',{status:202,body:receipt});return res.status(202).json(receipt);
   } catch(error) {await uncertainIntake(guard);if(error instanceof RequestError)return sendRequestError(res,error);

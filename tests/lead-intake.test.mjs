@@ -1,3 +1,4 @@
+import {CONTACT_CONSENT_VERSION} from '../src/lib/contactConsent.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import handler from '../api/lead.js';
@@ -17,6 +18,8 @@ test('property inquiries preserve preferences and attribution through the server
     assert.equal(forwarded.body.weeklyListingEmailsRequested,false);
     assert.equal(forwarded.body.consent.smsAccepted,false);
     assert.equal(forwarded.body.assignedTo,undefined);assert.equal(forwarded.body.tenantId,undefined);
+    assert.equal((await invoke({body:{...body,consentVersion:CONTACT_CONSENT_VERSION,consentMethod:'form_submission'}})).code,202);
+    assert.equal(forwarded.body.consent.method,'form_submission');
     assert.equal((await invoke({body:{...body,consentAccepted:false}})).code,400);
     assert.equal((await invoke({headers:{origin:'https://untrusted.example','content-type':'application/json'}})).code,403);
     const captured=await invoke({body:{...body,funnelAction:'capture',weeklyListingPreferencePresented:false,funnelProfile:{location:'77304',beds:'3',maxPrice:'400000',mlsNumber:'12345678',boardId:'147',inquiryContext:'search'}}});

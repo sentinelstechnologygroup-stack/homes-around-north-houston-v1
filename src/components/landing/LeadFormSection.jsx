@@ -34,7 +34,7 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
     interested_in: "buying",
     message: "",
     area: "", budgetRange: "", timeline: "", workingWithAgent: "",
-    consentAccepted: true, website_check: "", weeklyListingEmailsRequested: true,
+    website_check: "", weeklyListingEmailsRequested: true,
     ...campaignDefaults(params),
   })
   const submissionId = useRef(null)
@@ -126,7 +126,7 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
           funnelTelemetry: collectTelemetry(),
           weeklyListingEmailsRequested: form.weeklyListingEmailsRequested, weeklyListingPreferencePresented: step === 2,
           message: form.message, website_check: form.website_check, formStartedAt,
-          consentAccepted: form.consentAccepted, consentVersion: CONTACT_CONSENT_VERSION,
+          consentAccepted: true, consentVersion: CONTACT_CONSENT_VERSION, consentMethod: 'form_submission',
           funnelProfile: { ...campaignDefaults(params), area: form.city || form.zip || form.neighborhood },
           attribution: { ...attribution, ...captureLeadAttribution() },
         }),
@@ -258,18 +258,17 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
 
               </>}
               {step === 2 && <CompactPreferences form={form} update={update} searchInquiry={searchInquiry} onLocation={value=>setForm(current=>({...current,location:value,city:/^\d{5}$/.test(value)?'':value,zip:/^\d{5}$/.test(value)?value:''}))} />}
-              {step === 1 && <label className="flex items-start gap-3 text-sm text-[#0A192F]/75 leading-relaxed"><input required type="checkbox" checked={form.consentAccepted} onChange={e=>update('consentAccepted',e.target.checked)} className="mt-1" />{CONTACT_CONSENT_TEXT}</label>}
               <div className="hidden" aria-hidden="true"><input aria-label="Leave this field empty" tabIndex={-1} autoComplete="off" value={form.website_check} onChange={e => update("website_check", e.target.value)} /></div>
               {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
               <button
                 type="submit"
-                disabled={sending || !form.firstName || !form.lastName || !form.email || !form.phone || !form.interested_in || !form.consentAccepted}
+                disabled={sending || !form.firstName || !form.lastName || !form.email || !form.phone || !form.interested_in}
                 className="w-full py-3.5 bg-[#C5A059] text-white font-body font-semibold rounded-lg hover:bg-[#B08A3E] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#C5A059]/20"
               >
                 <Send className="w-4 h-4" />
                 {sending ? "Saving…" : step === 1 ? "Continue" : "View Matching Homes"}
               </button>
-              <p className="text-sm text-[#0A192F]/75 leading-relaxed">The office team will contact you on behalf of Golden Cross Realty. <a href="/privacy" className="underline">Privacy Policy</a> · <a href="/terms" className="underline">Terms</a></p>
+              <p className="text-sm text-[#0A192F]/75 leading-relaxed">* {CONTACT_CONSENT_TEXT} <a href="/privacy" className="underline">Privacy Policy</a> · <a href="/terms" className="underline">Terms</a></p>
             </form>
           </motion.div>
         </div>
