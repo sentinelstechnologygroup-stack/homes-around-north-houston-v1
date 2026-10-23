@@ -16,7 +16,7 @@ export function configuration(env, host) {
 }
 const validId = value => /^[A-Za-z0-9-]{1,50}$/.test(String(value));
 export function searchFilters(input, config) {
-  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom','featuredOnly','minLotSqft','maxLotSqft']);
+  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','mapViewport','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom','featuredOnly','minLotSqft','maxLotSqft']);
   for (const key of Object.keys(input)) if (!permitted.has(key)) throw new Error('Unsupported filter.');
   for (const value of Object.values(input)) if (Array.isArray(value) || typeof value === 'object') throw new Error('Invalid filter.');
   if (input.foreclosures === true || input.foreclosures === 'true') throw new Error('Foreclosure filtering is not available.');
@@ -37,8 +37,8 @@ export function searchFilters(input, config) {
   if(input.availability && !Object.hasOwn(statuses,input.availability))throw new Error('Invalid availability.');
   if(input.pageSize){if(!['48','96','50','100'].includes(String(input.pageSize)))throw new Error('Choose 48 or 96 homes per page.');filters.resultsPerPage=Number(input.pageSize);}
   let drawn=input.polygon ? ringFrom(input.polygon) : null;
-  if (input.bounds) {
-    const box=String(input.bounds).split(',').map(Number);
+  for (const area of [input.bounds,input.mapViewport].filter(Boolean)) {
+    const box=String(area).split(',').map(Number);
     const [w,s,e,n]=box;
     if(box.length!==4 || box.some(v=>!Number.isFinite(v)) || w>=e || s>=n || w < -180 || e>180 || s < -85 || n>85 || e-w>3 || n-s>3) throw new Error('Zoom in before searching this map area.');
     if(drawn){drawn=intersectBox(drawn,box);if(!drawn)filters._emptyArea=true;}else drawn=[[w,s],[e,s],[e,n],[w,n],[w,s]];
@@ -102,18 +102,23 @@ async function provider(filters,key,fetcher){
   if(!response.ok)throw new Error('Provider unavailable.');const payload=await response.json();if(!Array.isArray(payload.listings))throw new Error('Invalid provider response.');return payload;
 }
 const clusterCache=new Map();
-async function mapClusters(filters,config,key,fetcher){
+export async function mapClusters(filters,config,key,fetcher=fetch){
  if(filters._emptyArea)return {clusters:[],mapCoverage:'all'};
- const mapFilters={...filters,pageNum:1,resultsPerPage:1,sortBy:'createdOnDesc',displayAddressOnInternet:'Y',cluster:true,listings:false,clusterLimit:200,clusterPrecision:14,clusterFields:'mlsNumber,boardId,status,standardStatus,listPrice,address,permissions,map'};
+ const mapFilters={...filters,pageNum:1,resultsPerPage:1,sortBy:'createdOnDesc',displayAddressOnInternet:'Y',cluster:true,listings:false,clusterLimit:200,clusterPrecision:14,clusterListingsThreshold:100,clusterFields:'mlsNumber,boardId,status,standardStatus,listPrice,address,permissions,map'};
  const cacheKey=JSON.stringify([key,mapFilters]);const prior=clusterCache.get(cacheKey);if(fetcher===fetch&&prior?.until>Date.now())return prior.value;
- let payload;
- for(let precision=Math.min(27,Math.max(10,filters._mapZoom?filters._mapZoom+2:11));precision>=8;precision-=2){payload=await provider({...mapFilters,clusterPrecision:precision},key,fetcher);const clusters=payload.aggregates?.map?.clusters;if(!Array.isArray(clusters))return {clusters:[],mapCoverage:'page'};if(clusters.reduce((n,c)=>n+Number(c.count||0),0)>=payload.count)break;}
+ // Precision is a spatial bit depth, not a Leaflet zoom number. Keep the
+ // detailed layer even when the provider's 200-cell cap samples the inventory.
+ // Coarsening until every match is counted creates the giant metro-wide groups.
+ const precision=Math.min(29,Math.max(22,(filters._mapZoom||10)+13));
+ const payload=await provider({...mapFilters,clusterPrecision:precision},key,fetcher);
+ if(!Array.isArray(payload.aggregates?.map?.clusters))return {clusters:[],mapCoverage:'page'};
  const clusters=(payload.aggregates?.map?.clusters||[]).map(c=>{
   const latitude=Number(c.location?.latitude),longitude=Number(c.location?.longitude);const t=c.bounds?.top_left,b=c.bounds?.bottom_right;const box=[Number(t?.longitude),Number(b?.latitude),Number(b?.longitude),Number(t?.latitude)];
   if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>85||Math.abs(longitude)>180||!Number.isInteger(c.count)||c.count<1||box.some(v=>!Number.isFinite(v)))return null;
-  return {count:c.count,coordinates:[latitude,longitude],bounds:box,listing:c.count===1&&c.listing?projectListing(c.listing,config):null};
+  const single=c.listing||(c.count===1?c.listings?.[0]:null);
+  return {count:c.count,coordinates:[latitude,longitude],bounds:box,listing:single?projectListing(single,config):null,listings:Array.isArray(c.listings)?c.listings.map(l=>projectListing(l,config)).filter(l=>l?.coordinates):[]};
  }).filter(Boolean);
- const value={clusters,mapCoverage:clusters.reduce((n,c)=>n+c.count,0)>=payload.count?'all':'page'};
+ const value={clusters,mapCoverage:clusters.reduce((n,c)=>n+c.count,0)>=payload.count?'all':'sampled'};
  if(fetcher===fetch){if(clusterCache.size>100)clusterCache.clear();clusterCache.set(cacheKey,{value,until:Date.now()+15000});}return value;
 }
 export async function queryListings(filters,config,key,fetcher=fetch){
