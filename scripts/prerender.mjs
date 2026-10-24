@@ -19,6 +19,6 @@ for (const route of [...Object.keys(pages), '/404']) {
   const target = route === '/' ? 'dist/index.html' : route === '/404' ? 'dist/404.html' : `dist${route}/index.html`;
   await fs.mkdir(path.dirname(target), { recursive: true }); await fs.writeFile(target, html);
 }
-await fs.writeFile('dist/robots.txt', `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`);
-await fs.writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${Object.keys(pages).map(route => `<url><loc>${SITE_ORIGIN}${route === '/' ? '/' : route}</loc></url>`).join('')}</urlset>\n`);
+await fs.writeFile('dist/robots.txt', `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /verify\n\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`);
+await fs.writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${Object.keys(pages).filter(route => !pages[route].noindex).map(route => `<url><loc>${SITE_ORIGIN}${route === '/' ? '/' : route}</loc></url>`).join('')}</urlset>\n`);
 console.log(`Prerendered ${Object.keys(pages).length} pages and the 404 page.`);

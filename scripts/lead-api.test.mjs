@@ -4,7 +4,7 @@ import handler from '../api/lead.js';
 import { CONTACT_CONSENT_VERSION } from '../src/lib/contactConsent.js';
 
 const originalFetch = globalThis.fetch;
-const body = () => ({ submissionId: 'e84c5d28-a16c-493a-b85d-d5a96c670b51', name: 'Website Test', email: 'test@example.com', phone: '2025550100', interested_in: 'investing', consentAccepted: true, consentVersion: CONTACT_CONSENT_VERSION, formStartedAt: new Date(Date.now() - 5000).toISOString(), funnelProfile: { area: 'Conroe', budgetRange: '300000', workingWithAgent: 'yes' }, attribution: { utm_campaign: 'north-houston-test', gclid: 'synthetic-click-id', tenantId: 'foreign' }, tenantId: 'foreign', isTest: true });
+const body = () => ({ submissionId: 'e84c5d28-a16c-493a-b85d-d5a96c670b51', name: 'Website Test', email: 'test@example.com', phone: '2025550100', interested_in: 'investing', consentAccepted: true, consentVersion: CONTACT_CONSENT_VERSION,consentMethod:'form_submission', formStartedAt: new Date(Date.now() - 5000).toISOString(), funnelProfile: { area: 'Conroe', budgetRange: '300000', workingWithAgent: 'yes' }, attribution: { utm_campaign: 'north-houston-test', gclid: 'synthetic-click-id', tenantId: 'foreign' }, tenantId: 'foreign', isTest: true });
 async function invoke(payload = body(), extra = {}) {
   const res = { code: 0, headers: {}, setHeader(key, value) { this.headers[key] = value; }, status(code) { this.code = code; return this; }, json(value) { this.value = value; return this; } };
   await handler({ method: 'POST', headers: { origin: 'https://homes-around-north-houston-v1.vercel.app', 'content-type': 'application/json' }, body: payload, ...extra }, res);

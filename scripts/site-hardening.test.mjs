@@ -26,7 +26,10 @@ test('CSP accepts only the exact structured-data hash and preserves HAR framing'
 });
 test('discovery files and not-found markup are present; video is opt-in', async () => {
   const sitemap = await fs.readFile('dist/sitemap.xml', 'utf8');
-  assert.equal((sitemap.match(/<loc>/g) || []).length, Object.keys(pages).length);
+  assert.equal((sitemap.match(/<loc>/g) || []).length, Object.values(pages).filter(page => !page.noindex).length);
+  assert.ok(!sitemap.includes('/verify'));
+  assert.ok(!sitemap.includes('vercel.app'));
+  assert.ok((await fs.readFile('dist/verify/index.html', 'utf8')).includes('noindex,follow'));
   assert.ok((await fs.readFile('dist/robots.txt', 'utf8')).includes('/sitemap.xml'));
   assert.ok((await fs.readFile('dist/404.html', 'utf8')).includes('noindex,follow'));
   const homepage = await fs.readFile('dist/index.html', 'utf8');

@@ -1,20 +1,10 @@
+import {parseRequestBody,localRate,beginIntake,finishIntake,uncertainIntake,verifyBotToken,sendRequestError,RequestError} from '../server/request-security.js';
 import { createHash } from 'node:crypto';
-import { CONTACT_CONSENT_TEXT, CONTACT_CONSENT_VERSION } from '../src/lib/contactConsent.js';
+import { contactAcknowledgement } from '../src/lib/contactConsent.js';
 
 const clean = (value, max = 200) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 const interests = { buying: 'Buying', selling: 'Selling', investing: 'Investment Properties', buying_and_selling: 'Buying & Selling' };
-// Best-effort per-instance throttling; configure platform rate limits before launch.
-const attempts = new Map();
-function throttled(req) {
-  const ip = clean(String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0], 100);
-  const now = Date.now();
-  for (const [key, entry] of attempts) if (now - entry.started > 600000) attempts.delete(key);
-  const entry = attempts.get(ip) || { started: now, count: 0 };
-  entry.count++;
-  if (attempts.size >= 2000 && !attempts.has(ip)) return true;
-  attempts.set(ip, entry);
-  return entry.count > 10;
-}
+export const config = { maxDuration: 120 };
 const allowedOrigins = ['https://homes-around-north-houston-v1.vercel.app', 'https://homesaroundnorthhouston.com', 'https://www.homesaroundnorthhouston.com'];
 
 export default async function handler(req, res) {
@@ -25,15 +15,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
   const origins = (process.env.ALLOWED_ORIGINS || allowedOrigins.join(',')).split(',').map(item => item.trim());
+  if(process.env.VERCEL_ENV==='preview' && process.env.VERCEL_URL) origins.push('https://'+process.env.VERCEL_URL);
   if (!req.headers.origin || !origins.includes(req.headers.origin)) return res.status(403).json({ error: 'Origin not allowed' });
-  if (!String(req.headers['content-type'] || '').includes('application/json')) return res.status(415).json({ error: 'JSON required' });
-  if (throttled(req)) return res.status(429).json({ error: 'Please wait before submitting another inquiry.' });
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch { return res.status(400).json({ error: 'Invalid request' }); }
-  }
-  if (!body || typeof body !== 'object' || JSON.stringify(body).length > 20000) return res.status(400).json({ error: 'Invalid request' });
+  let body;
+  try { body=parseRequestBody(req,20000);const activity=['active','hidden','exit','complete','verify_email','verify_sms'].includes(body.funnelAction);localRate(req,activity?'lead-session':'lead-capture',activity?180:10); } catch(error){return sendRequestError(res,error);}
   if (clean(body.website_check)) return res.status(400).json({ error: 'Invalid request' });
+  if (['active','hidden','exit','complete','verify_email','verify_sms'].includes(body.funnelAction)) {
+    if (!/^[a-f0-9]{64}$/.test(body.sessionId || '') || !/^[a-f0-9]{64}$/.test(body.sessionToken || '')) return res.status(400).json({ error: 'Invalid session' });
+    const goals = { ...(body.searchCriteria || {}), ...(body.property ? {boardId:body.property.boardId,mlsNumber:body.property.mlsNumber,propertyAddress:body.property.address} : {}), ...(body.funnelProfile || {}) };
+    const funnelProfile = Object.fromEntries(['area','city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext','budgetRange','timeline','workingWithAgent'].map(key => [key, clean(goals[key],key==='polygon'?6000:200)]));
+    funnelProfile.interested_in = Object.hasOwn(interests, goals.interested_in) ? goals.interested_in : '';
+    funnelProfile.message = clean(goals.message, 2000);
+    funnelProfile.weeklyListingPreferencePresented = goals.weeklyListingPreferencePresented === true;
+    funnelProfile.weeklyListingEmailsRequested = goals.weeklyListingPreferencePresented === true && goals.weeklyListingEmailsRequested === true;
+    if(process.env.INQUIRY_GHL_ENABLED==='true'&&['active','hidden','exit','complete'].includes(body.funnelAction))return forwardGhl({action:'inquiry_session',funnelAction:body.funnelAction,sessionId:body.sessionId,sessionToken:body.sessionToken,funnelProfile},res,req,body);
+    return forward({ funnelAction: body.funnelAction, sessionId: body.sessionId, sessionToken: body.sessionToken, funnelProfile, funnelTelemetry: body.funnelTelemetry }, res, req.headers.origin, req, body);
+  }
   const submissionId = clean(body.submissionId, 80);
   if (!/^[a-f0-9-]{36}$/i.test(submissionId)) return res.status(400).json({ error: 'Please reload the page and try again.' });
   const name = clean(body.name, 120);
@@ -44,42 +41,76 @@ export default async function handler(req, res) {
   if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || digits.length < 10 || digits.length > 15 || !interest) {
     return res.status(400).json({ error: 'Enter your name, valid email and phone number, and interest.' });
   }
-  if (body.consentAccepted !== true || body.consentVersion !== CONTACT_CONSENT_VERSION) return res.status(400).json({ error: 'Contact permission is required.' });
+  const acknowledgement=contactAcknowledgement(body);
+  if (!acknowledgement) return res.status(400).json({ error: 'Please reload the form and try again.' });
   const started = Date.parse(body.formStartedAt);
   const elapsed = Date.now() - started;
   if (!Number.isFinite(elapsed) || elapsed < 1500 || elapsed > 86400000) return res.status(400).json({ error: 'Please reload the page and try again.' });
   const webhook = process.env.LEAD_WEBHOOK_URL;
   const token = process.env.LEAD_WEBHOOK_TOKEN;
   const route = process.env.GMS_LEAD_ROUTE_KEY;
-  if (!webhook || !token || !route) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });
+  if (process.env.INQUIRY_GHL_ENABLED!=='true'&&(!webhook || !token || !route)) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });
   const now = new Date().toISOString();
-  const goals = body.funnelProfile || {};
+  const goals = { ...(body.searchCriteria || {}), ...(body.property ? {boardId:body.property.boardId,mlsNumber:body.property.mlsNumber,propertyAddress:body.property.address} : {}), ...(body.funnelProfile || {}) };
   const attribution = { sourceSite: 'homes-around-north-houston', channel: 'website', provider: 'GMS Pro', inquiryType: body.interested_in };
-  for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid']) attribution[key] = clean(body.attribution?.[key], 200);
+  for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'cta', 'campaign']) attribution[key] = clean(body.attribution?.[key], 200);
   const lead = {
     weeklyListingPreferencePresented: body.weeklyListingPreferencePresented === true,
     weeklyListingEmailsRequested: body.weeklyListingPreferencePresented === true && body.weeklyListingEmailsRequested === true,
     submissionId, name, email, phone: digits.length === 10 ? `+1${digits}` : `+${digits}`, market: clean(goals.area, 200) || 'North Houston',
     services: [interest], sources: ['Homes Around North Houston website'],
-    notes: `Interest: ${interest}\n${clean(body.message, 2000)}`,
+    notes: `Interest: ${interest}\n${clean(body.message, 2000)}\nSearch/property context: ${JSON.stringify(Object.fromEntries(['location','city','zip','minPrice','maxPrice','beds','baths','boardId','mlsNumber','propertyAddress'].map(key=>[key,clean(goals[key],key==='polygon'?6000:200)]).filter(([,value])=>value)))}`,
     pageUrl: `${req.headers.origin}/`, submittedAt: now, attribution,
-    consent: { accepted: true, version: CONTACT_CONSENT_VERSION, text: CONTACT_CONSENT_TEXT, capturedAt: now, channels: ['phone', 'email'], smsAccepted: false },
+    consent: { ...acknowledgement, capturedAt: now },
     funnelProfile: {
       area: clean(goals.area, 200), budgetRange: clean(goals.budgetRange, 100), timeline: clean(goals.timeline, 100),
       propertyType: clean(goals.propertyType, 100), workingWithAgent: clean(goals.workingWithAgent, 30), financingStatus: clean(goals.financingStatus, 100),
-      completionStatus: 'completed',
+      ...Object.fromEntries(['city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext'].map(key => [key, clean(goals[key],key==='polygon'?6000:200)])),
+      completionStatus: body.funnelAction === 'capture' ? 'contact_captured' : 'completed',
     },
   };
+  if (body.funnelAction === 'capture') { lead.funnelAction = 'capture'; lead.funnelTelemetry = body.funnelTelemetry; }
+  if(process.env.INQUIRY_GHL_ENABLED==='true')return forwardGhl({action:'inquiry_email',site:'north',submissionId:lead.submissionId,name:lead.name,email:lead.email,phone:lead.phone,interest:lead.services[0],message:clean(body.message,2000),property:goals.boardId&&goals.mlsNumber?{boardId:goals.boardId,mlsNumber:goals.mlsNumber,address:goals.propertyAddress}:null,searchCriteria:body.searchCriteria||{},weekly:lead.weeklyListingEmailsRequested,consent:lead.consent},res,req,body);
+  return forward(lead, res, req.headers.origin, req, body);
+}
+
+async function forwardGhl(payload,res,req,body){
+ let guard;try{
+  if(!process.env.GMS_SEARCH_INTAKE_URL||!process.env.GMS_SEARCH_INTAKE_TOKEN)throw new RequestError(503,'Online inquiries are temporarily unavailable.');
+  const session=payload.action==='inquiry_session';if(!session)await verifyBotToken(body,req.headers.origin);
+  guard=await beginIntake(req,{site:'north',scope:session?'session':'lead',body,submissionId:payload.submissionId,rateOnly:session});if(guard.replay)return res.status(guard.replay.status).json(guard.replay.body);
+  const r=await fetch(process.env.GMS_SEARCH_INTAKE_URL,{method:'POST',redirect:'error',headers:{'Content-Type':'application/json',Authorization:`Bearer ${process.env.GMS_SEARCH_INTAKE_TOKEN}`},body:JSON.stringify(payload),signal:AbortSignal.timeout(105000)}),d=await r.json().catch(()=>({}));
+  if(!r.ok||!d.accepted||!d.reference)throw Error('Inquiry receipt not confirmed');
+  const receipt={accepted:true,reference:d.reference,...(!session?{sessionId:d.sessionId,sessionToken:d.sessionToken,state:d.state}:{})};await finishIntake(guard,'complete',{status:202,body:receipt});return res.status(202).json(receipt);
+ }catch(e){await uncertainIntake(guard);if(e instanceof RequestError)return sendRequestError(res,e);return res.status(502).json({error:'We could not confirm receipt. Please contact the Golden Cross Realty office before submitting again.'});}
+}
+
+async function forward(lead, res, origin, req, body) {
+  const webhook = process.env.LEAD_WEBHOOK_URL;
+  const token = process.env.LEAD_WEBHOOK_TOKEN;
+  const route = process.env.GMS_LEAD_ROUTE_KEY;
+  if (!webhook || !token || !route) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });
+  // Only server configuration can enable fixtures; a browser test flag is ignored.
+  const controlledPreview = process.env.GMS_INTAKE_TEST_ONLY === 'true' && process.env.VERCEL_ENV === 'preview';
+  if (process.env.GMS_INTAKE_TEST_ONLY === 'true') {
+    if (!controlledPreview) return res.status(503).json({ error: 'Controlled intake is available only in the preview.' });
+    lead.isTest = true;
+  }
+  let guard;
   try {
+    const session=!lead.submissionId;if(!session)await verifyBotToken(body,origin);
+    guard=await beginIntake(req,{site:'north',scope:session?'session':'lead',body,submissionId:lead.submissionId,rateOnly:session});if(guard.replay)return res.status(guard.replay.status).json(guard.replay.body);
     const upstream = await fetch(webhook, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-gms-route-key': route, 'idempotency-key': createHash('sha256').update(`${route}:${submissionId}`).digest('hex') },
-      body: JSON.stringify(lead), signal: AbortSignal.timeout(12000),
+      method: 'POST', redirect:'error', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-gms-route-key': route, ...(controlledPreview ? {'x-gms-preview-origin': origin} : {}), 'idempotency-key': createHash('sha256').update(`${route}:${lead.submissionId || lead.sessionId}`).digest('hex') },
+      body: JSON.stringify(lead), signal: AbortSignal.timeout(controlledPreview ? 105000 : 12000),
     });
-    if (upstream.status === 409 || upstream.status === 404) return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });
+    if (upstream.status === 409 || upstream.status === 404) {await uncertainIntake(guard);return res.status(503).json({ error: 'Online inquiries are not available yet. Please try again later.' });}
     const result = await upstream.json().catch(() => ({}));
+    if (controlledPreview && upstream.status === 403) {await uncertainIntake(guard);return res.status(403).json({ error: 'Controlled preview: use the designated test email. This test may also have expired.' });}
     if (!upstream.ok || result.accepted !== true || !result.leadId) throw new Error('Intake not confirmed');
-    return res.status(202).json({ accepted: true, reference: result.leadId });
-  } catch {
-    return res.status(502).json({ error: 'We could not confirm receipt. Please contact GMS Pro before submitting again.' });
+    const receipt={ accepted: true, reference: result.leadId,...(lead.funnelAction ? { sessionId: result.sessionId, sessionToken: result.sessionToken, state: result.state } : {}) };
+    await finishIntake(guard,'complete',{status:202,body:receipt});return res.status(202).json(receipt);
+  } catch(error) {await uncertainIntake(guard);if(error instanceof RequestError)return sendRequestError(res,error);
+    return res.status(502).json({ error: 'We could not confirm receipt. Please contact the Golden Cross Realty office before submitting again.' });
   }
 }

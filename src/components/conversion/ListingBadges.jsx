@@ -1,0 +1,1 @@
+export default function ListingBadges({badges=[]}){return badges.length?<div className="ps-listing-badges">{badges.map(b=><span className={'ps-listing-badge ps-badge-'+b.kind} key={b.kind}>{b.label}</span>)}</div>:null;}
