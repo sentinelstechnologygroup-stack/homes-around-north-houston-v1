@@ -1,14 +1,14 @@
 import { structuredData } from '../src/lib/seo.js';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+// Refresh the JSON-LD hash without resetting existing CSP integrations, rewrites or headers.
 const hash = createHash('sha256').update(structuredData).digest('base64');
-const policy = `default-src 'self'; script-src 'self' 'sha256-${hash}'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; frame-src https://www.har.com https://har.com; object-src 'none'; base-uri 'self'; form-action 'self' mailto:; frame-ancestors 'none'; upgrade-insecure-requests`;
-const cfg = {
-  headers: [{ source: '/(.*)', headers: [
-    { key: 'Content-Security-Policy', value: policy }, { key: 'X-Content-Type-Options', value: 'nosniff' },
-    { key: 'X-Frame-Options', value: 'DENY' }, { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-    { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
-  ] }],
-  rewrites: ['buy', 'sell', 'investment-properties', 'homes', 'market-reports', 'privacy', 'terms'].map(route => ({ source: '/' + route, destination: '/' + route + '/index.html' })),
-};
+const cfg = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
+const policyHeader = cfg.headers.flatMap(group => group.headers || []).find(header => header.key.toLowerCase() === 'content-security-policy');
+if (!policyHeader || !/script-src[^;]*/.test(policyHeader.value)) throw new Error('Existing script-src policy is required.');
+policyHeader.value = policyHeader.value.replace(/script-src[^;]*/, directive => {
+ const withoutOldHash = directive.replace(/\s+'sha256-[A-Za-z0-9+/=]+'/g, '');
+ return `${withoutOldHash} 'sha256-${hash}'`;
+});
 fs.writeFileSync('vercel.json', JSON.stringify(cfg, null, 2) + '\n');
+console.log('Updated structured-data CSP hash; existing security configuration preserved.');

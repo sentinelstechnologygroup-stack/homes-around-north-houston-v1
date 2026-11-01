@@ -36,7 +36,7 @@ HAR search is embedded directly, preserving HAR's listing attribution and presen
 
 ## Operational limitations
 
-- The inquiry form prepares an email to Broker@GoldenCrossRealty.com; the visitor must send it. No GMS CRM ingestion or automatic email delivery is implemented here.
+- This branch prepares GMS intake pending an approved campaign and readiness. Production continues using its email-draft form until intake is activated. See `docs/gms-lead-routing.md`.
 - Market reports link to HAR's published source, not a live statistical API. Old unsourced market figures, inventory counts, uplift claims, and unverified testimonials were removed.
 - Business-networking and local-service directories have been removed. The inquiry supports buying, selling, investment properties, and buying/selling together.
 - The existing Golden Cross IABS is reused; the broker remains responsible for keeping its details current.

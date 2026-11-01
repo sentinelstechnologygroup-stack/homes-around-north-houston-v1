@@ -19,7 +19,7 @@ export default function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr] py-12 lg:py-14">
           <div>
             <p className="text-[#C5A059] text-xs font-semibold uppercase tracking-[0.2em] mb-3">Your North Houston Home</p>
-            <h2 className="font-display text-3xl leading-tight max-w-sm">Homes Around<br />North Houston</h2>
+            <div className="flex items-center gap-4"><img src="/images/brand/homes-around-north-houston-logo.png" alt="" width="1254" height="1254" className="h-28 w-28 shrink-0 object-contain" /><h2 className="font-display text-2xl leading-tight max-w-sm">Homes Around<br />North Houston</h2></div>
             <p className="mt-4 max-w-sm text-sm text-white/75 leading-relaxed">Buy, sell, and explore investment properties with Golden Cross Realty.</p>
             <a href="https://www.goldenmarketingservices.com/" className="inline-flex items-center gap-3 mt-6 group">
               <span className="text-xs text-white/65">Powered by</span>
@@ -66,7 +66,7 @@ export default function Footer() {
         <div className="border-t border-white/15 py-6 flex flex-col gap-4 text-xs text-white/65 lg:flex-row lg:items-center lg:justify-between">
           <p>© {new Date().getFullYear()} Homes Around North Houston. All rights reserved.</p>
           <p className="flex items-center gap-2"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 12h6M9 16h6" /></svg>Equal Housing Opportunity</p>
-          <div className="flex gap-5"><Link to="/privacy" className="hover:text-white underline underline-offset-4">Privacy Policy</Link><Link to="/terms" className="hover:text-white underline underline-offset-4">Terms &amp; Disclosures</Link></div>
+          <div className="flex flex-wrap gap-5"><button type="button" onClick={()=>window.dispatchEvent(new Event('gms-cookie-settings'))} className="underline underline-offset-4 hover:opacity-80">Cookie settings</button><Link to="/privacy" className="hover:text-white underline underline-offset-4">Privacy Policy</Link><Link to="/terms" className="hover:text-white underline underline-offset-4">Terms &amp; Disclosures</Link></div>
         </div>
       </div>
     </footer>

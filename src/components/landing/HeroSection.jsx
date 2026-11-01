@@ -1,33 +1,29 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, DollarSign, MapPin, Home, ChevronDown } from "lucide-react";
+import { Search, DollarSign, MapPin, ChevronDown } from "lucide-react";
 
 const HERO_IMG = "/images/hero/north-houston-hero.webp";
 
-const priceRanges = [
-  "Any Price",
-  "$100k – $250k",
-  "$250k – $500k",
-  "$500k – $750k",
-  "$750k – $1M",
-  "$1M+",
-];
+const priceOptions = [150000, 200000, 250000, 300000, 350000, 400000, 500000, 600000, 750000, 1000000, 1500000, 2000000];
+const priceLabel = value => '$' + value.toLocaleString('en-US');
 
 export default function HeroSection() {
   const navigate = useNavigate();
   const [playVideo, setPlayVideo] = useState(false);
-  const [city, setCity] = useState("");
-  const [zip, setZip] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [priceRange, setPriceRange] = useState("Any Price");
-  const search = (event) => {
+  const [filters, setFilters] = useState({location:'',minPrice:'',maxPrice:'',beds:'',baths:'',newConstruction:'',priceReduced:''});
+  const [searchError, setSearchError] = useState('');
+  const update = (key,value) => { setFilters(current=>({...current,[key]:value}));setSearchError(''); };
+  const search = event => {
     event.preventDefault();
-    const prices = { "$100k – $250k": [100000, 250000], "$250k – $500k": [250000, 500000], "$500k – $750k": [500000, 750000], "$750k – $1M": [750000, 1000000], "$1M+": [1000000, ""] };
-    const [minPrice, maxPrice] = prices[priceRange] || ["", ""];
+    if(filters.minPrice && filters.maxPrice && Number(filters.minPrice)>Number(filters.maxPrice)) {
+      setSearchError('Choose a maximum price that is at least the minimum price.');return;
+    }
     const params = new URLSearchParams();
-    for (const [key, value] of Object.entries({ city, zip, neighborhood, minPrice, maxPrice })) if (value) params.set(key, String(value));
-    navigate(`/homes?${params}`);
+    const incoming = new URLSearchParams(window.location.search);
+    for(const key of ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','gbraid','wbraid','fbclid','campaign']) if(incoming.has(key)) params.set(key,incoming.get(key));
+    for(const [key,value] of Object.entries(filters)) if(value.trim()) params.set(key,value.trim());
+    navigate(`/homes${params.size?'?'+params:''}`);
   };
 
 
@@ -43,7 +39,7 @@ export default function HeroSection() {
 
       <button type="button" onClick={() => setPlayVideo(current => !current)} aria-pressed={playVideo} className="absolute bottom-3 right-4 z-20 text-white/80 text-xs underline underline-offset-4">{playVideo ? "Pause background video" : "Play background video"}</button>
       {/* Content */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+      <div className="relative z-10 w-full max-w-7xl mx-auto grid items-center gap-8 px-4 pt-28 pb-16 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:pt-36 lg:pb-24">
         <div className="max-w-3xl">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -80,24 +76,17 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-white/60 font-body text-base leading-relaxed mb-8 max-w-xl"
+            className="hidden sm:block text-white/60 font-body text-base leading-relaxed mb-8 max-w-xl"
           >
-            Search homes across North Houston and talk with Golden Cross Realty about buying, selling, or exploring investment properties. Start with the properties, neighborhoods, and market information that fit your goals.
+            Search homes across North Houston and talk with our local team about buying, selling, or exploring investment properties. Start with the properties, neighborhoods, and market information that fit your goals.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex flex-wrap gap-4 mb-12"
+            className="hidden flex-wrap items-center gap-4 lg:flex"
           >
-            <button
-              onClick={() => navigate("/homes")}
-              className="px-8 py-3.5 bg-[#C5A059] text-[#0A192F] font-body font-semibold text-base rounded hover:bg-[#B08A3E] transition-all duration-300 flex items-center gap-2 shadow-lg shadow-[#C5A059]/20"
-            >
-              <Search className="w-4 h-4" />
-              Search Homes
-            </button>
             <button
               onClick={() => navigate("/?interest=selling#contact")}
               className="px-8 py-3.5 border-2 border-white/30 text-white font-body font-semibold text-base rounded hover:border-[#C5A059] hover:text-[#C5A059] transition-all duration-300 flex items-center gap-2"
@@ -109,71 +98,31 @@ export default function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Search Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.7 }}
-          className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6 max-w-4xl"
-        >
-          <form onSubmit={search} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C5A059]" />
-              <input
-                type="text"
-                placeholder="City"
-                aria-label="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/50 font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors"
-              />
+        <div className="max-w-5xl rounded-2xl bg-white p-5 text-[#0A192F] shadow-2xl sm:p-7" aria-labelledby="hero-search-heading">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#C5A059]/15"><Search className="h-5 w-5" aria-hidden="true" /></span>
+            <div><h2 id="hero-search-heading" className="font-display text-2xl font-semibold">Find your next home</h2><p className="mt-1 text-sm text-[#0A192F]/70">Explore homes for sale across North Houston.</p></div>
+          </div>
+          <form onSubmit={search} aria-label="Search homes for sale" className="space-y-4">
+            <div className="grid gap-3 xl:grid-cols-[1fr_auto]">
+              <label className="block text-sm font-semibold">City, county, ZIP code or MLS number
+                <span className="relative mt-2 block"><MapPin aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#0A192F]/50" /><input type="search" value={filters.location} onChange={e=>update('location',e.target.value)} placeholder="Conroe, Montgomery County or 77304" maxLength={100} className="min-h-14 w-full rounded-lg border border-[#0A192F]/25 bg-white py-3 pl-12 pr-4 text-base font-normal focus:outline-none focus:ring-2 focus:ring-[#C5A059]" /></span>
+              </label>
+              <button type="submit" className="flex min-h-14 items-center justify-center gap-2 rounded-lg bg-[#C5A059] px-8 py-3 font-semibold text-[#0A192F] transition-colors hover:bg-[#B08A3E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A192F] xl:self-end"><Search aria-hidden="true" className="h-5 w-5" />Search Homes</button>
             </div>
-            <div className="relative">
-              <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C5A059]" />
-              <input
-                type="text"
-                placeholder="Zip Code"
-                aria-label="ZIP code"
-                inputMode="numeric"
-                pattern="[0-9]{5}"
-                value={zip}
-                onChange={(e) => setZip(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/50 font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              {[['minPrice','Min price','No minimum'],['maxPrice','Max price','No maximum'],['beds','Beds','Any beds'],['baths','Baths','Any baths']].map(([key,label,placeholder])=><label key={key} className="block min-w-0 text-sm font-semibold">{label}<select value={filters[key]} onChange={e=>update(key,e.target.value)} className="mt-2 min-h-12 w-full rounded-lg border border-[#0A192F]/25 bg-white px-3 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-[#C5A059]"><option value="">{placeholder}</option>{(key.endsWith('Price')?priceOptions:[1,2,3,4,5]).map(value=><option key={value} value={value}>{key.endsWith('Price')?priceLabel(value):`${value}+`}</option>)}</select></label>)}
             </div>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C5A059]" />
-              <input
-                type="text"
-                placeholder="Neighborhood"
-                aria-label="Neighborhood"
-                value={neighborhood}
-                onChange={(e) => setNeighborhood(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/50 font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors"
-              />
-            </div>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C5A059]" />
-              <select
-                aria-label="Price range"
-                value={priceRange}
-                onChange={(e) => setPriceRange(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors appearance-none"
-              >
-                {priceRanges.map((p) => (
-                  <option key={p} value={p} className="bg-[#0A192F] text-white">
-                    {p}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
-            </div>
-            <button type="submit" className="w-full py-3 bg-[#C5A059] text-[#0A192F] font-body font-semibold rounded-lg hover:bg-[#B08A3E] transition-all duration-300 flex items-center justify-center gap-2">
-              <Search className="w-4 h-4" />
-              Search
-            </button>
+            <label className="flex min-h-11 items-center gap-3 text-sm font-semibold"><input type="checkbox" checked={filters.newConstruction==='true'} onChange={e=>update('newConstruction',e.target.checked?'true':'')} className="h-5 w-5 accent-[#0A192F]" />New home construction only</label>
+<label className="flex min-h-11 items-center gap-3 text-sm font-semibold"><input type="checkbox" checked={filters.priceReduced==='true'} onChange={e=>update('priceReduced',e.target.checked?'true':'')} className="h-5 w-5 accent-[#0A192F]" />Price reduced</label>
+            {searchError && <p role="alert" className="text-sm font-medium text-red-700">{searchError}</p>}
+            <p className="text-xs leading-relaxed text-[#0A192F]/65">Browse the map and property details, then ask our local team for help.</p>
           </form>
-        </motion.div>
+        </div>
+        <div className="flex flex-wrap items-center gap-4 lg:hidden">
+          <button type="button" onClick={()=>navigate('/?interest=selling#contact')} className="rounded border border-white/40 px-5 py-3 text-sm font-semibold text-white">Request Home Value Analysis</button>
+          <button type="button" onClick={()=>navigate('/?interest=investing#contact')} className="text-sm text-white underline underline-offset-4">Explore Investment Properties</button>
+        </div>
       </div>
 
       {/* Scroll indicator */}

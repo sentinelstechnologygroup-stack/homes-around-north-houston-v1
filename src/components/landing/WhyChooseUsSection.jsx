@@ -12,12 +12,12 @@ const columns = [
   {
     icon: Handshake,
     title: "Buyer & Seller Guidance",
-    desc: "Golden Cross Realty helps you understand your options, compare homes, and prepare a selling strategy.",
+    desc: "Our local team helps you understand your options, compare homes, and prepare a selling strategy.",
   },
   {
     icon: LayoutGrid,
     title: "Investment Property Guidance",
-    desc: "Discuss potential investment property purchases, your budget, and the local market with Golden Cross Realty.",
+    desc: "Discuss potential investment property purchases, your budget, and the local market with our local team.",
   },
 ];
 
