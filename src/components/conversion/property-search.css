@@ -24,3 +24,6 @@
 /* Compact price flags and visually distinct area counts. */
 .property-map-pin:not(.property-map-cluster) span{display:inline-block;background:#176f61;color:#fff;border:1px solid #fff;border-radius:3px;padding:3px 5px;font-size:11px;line-height:16px;box-shadow:0 1px 4px #0004}
 .property-map-cluster span{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border-radius:50%;background:#fff;color:#14283b;border:2px solid #b58d44;box-shadow:0 1px 5px #0003;font-size:11px}
+
+/* Consumer account controls */
+.ps-account-dialog label{display:flex;flex-direction:column;gap:6px;margin:14px 0}.ps-account-dialog input:not([type=checkbox]),.ps-account-dialog select{width:100%;padding:10px;border:1px solid #c7ced5;border-radius:6px;background:#fff;color:#14283b}.ps-account-dialog .ps-check{display:flex;flex-direction:row;align-items:flex-start;line-height:1.6}.ps-account-dialog .ps-check input{margin-top:6px;flex:none}.ps-account-search{border:1px solid #d8ddd9;border-radius:10px;padding:18px;margin:20px 0}.ps-account-dialog{max-height:85vh;overflow:auto}.property-search>.ps-panel>.ps-account-dialog{max-height:none;max-width:none;width:100%;box-shadow:none}.ps-account-dialog button{min-height:42px}.ps-account-dialog form>.ps-tools{margin:18px 0}

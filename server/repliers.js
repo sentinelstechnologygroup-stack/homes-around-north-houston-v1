@@ -1,3 +1,5 @@
+import {countyFromLocation} from '../src/lib/countyLocation.js';
+import {newConstructionFilter} from './new-construction.js';
 export function readableDisclosure(value){const text=String(value||'').trim();return text.length<=1500 && /[ .]/.test(text) && !/^[A-Za-z0-9+/_=-]{80,}$/.test(text)?text:'Listing data supplied by the Houston Association of REALTORS® (HAR). Information is deemed reliable but not guaranteed.';}
 import {ringFrom,intersectBox} from './search-geometry.js';
 import {propertyDetails} from './property-details.js';
@@ -16,7 +18,7 @@ export function configuration(env, host) {
 }
 const validId = value => /^[A-Za-z0-9-]{1,50}$/.test(String(value));
 export function searchFilters(input, config) {
-  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','newListings','foreclosures','mlsNumber','boardId','bounds','mapViewport','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom','featuredOnly','minLotSqft','maxLotSqft']);
+  const permitted = new Set(['location','neighborhood','forSale','propertyType','minPrice','maxPrice','beds','baths','page','sort','openHouses','priceReduced','newConstruction','newListings','foreclosures','mlsNumber','boardId','bounds','mapViewport','ids','waterfront','minSqft','pageSize','polygon','availability','mapZoom','featuredOnly','minLotSqft','maxLotSqft']);
   for (const key of Object.keys(input)) if (!permitted.has(key)) throw new Error('Unsupported filter.');
   for (const value of Object.values(input)) if (Array.isArray(value) || typeof value === 'object') throw new Error('Invalid filter.');
   if (input.foreclosures === true || input.foreclosures === 'true') throw new Error('Foreclosure filtering is not available.');
@@ -30,6 +32,13 @@ export function searchFilters(input, config) {
     }
   }
   if (filters.minPrice > filters.maxPrice) throw new Error('Minimum price exceeds maximum.');
+  if (input.newConstruction !== undefined && !['', 'true', 'false'].includes(input.newConstruction)) throw new Error('Invalid new construction filter.');
+  if (input.newConstruction === 'true') {
+    if (input.forSale === '0') throw new Error('New construction only is a for-sale search.');
+    filters._newConstruction = true;
+  }
+  if (input.priceReduced !== undefined && !['','true','false'].includes(input.priceReduced)) throw new Error('Invalid price reduced filter.');
+  if (input.priceReduced === 'true') filters.lastPriceChangeType = 'decrease';
   if (input.waterfront === 'true') filters.waterfront = 'Y';
   if (input.newListings === 'true') filters.minListDate = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
   if (input.openHouses === 'true') filters.minOpenHouseDate = new Date().toISOString().slice(0,10);
@@ -55,7 +64,9 @@ export function searchFilters(input, config) {
 
   const location = String(input.location || '').trim();
   if (location.length > 100) throw new Error('Location is too long.');
-  if (/^\d{5}$/.test(location)) filters.zip = location;
+  const county=countyFromLocation(location);
+  if(county) filters.area=county;
+  else if (/^\d{5}$/.test(location)) filters.zip = location;
   else if (/^\d{7,9}$/.test(location)) filters.mlsNumber = [location];
   else if (/\d+\s+\S+/.test(location)) { filters.search = location; filters.searchFields = 'address.streetNumber,address.streetName,address.streetSuffix,address.city'; }
   else if (location) filters.city = [location.replace(/,?\s*(TX|Texas)$/i, '').trim()];
@@ -87,7 +98,7 @@ export function projectListing(listing, config, detailed=false) {
   const coordinates=listing.permissions?.displayAddressOnInternet==='Y' && listing.map?.latitude!=null && listing.map?.longitude!=null && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat)<=85 && Math.abs(lng)<=180 ? [lat,lng] : null;
   return {
     mlsNumber: String(listing.mlsNumber), boardId: String(listing.boardId), address,...listingHighlights(listing),
-    city: listing.address?.city || '', price: listing.listPrice, type: listing.type,
+    city: listing.address?.city || '', county: listing.address?.area || '', price: listing.listPrice, type: listing.type,
     beds: listing.details?.numBedrooms, baths: listing.details?.numBathrooms, sqft: listing.details?.sqft, coordinates,
     description: listing.permissions?.displayAddressOnInternet === 'Y' ? listing.details?.description || '' : '', brokerage: listing.office?.brokerageName || '',
     updatedOn: listing.updatedOn || '', standardStatus: listing.standardStatus || 'Active', yearBuilt: listing.details?.yearBuilt || null, lotSqft: listing.lot?.squareFeet ?? null, lotAcres: listing.lot?.acres ?? null,
@@ -97,9 +108,10 @@ export function projectListing(listing, config, detailed=false) {
 }
 const responseCache=new Map(),rankCache=new Map();
 async function provider(filters,key,fetcher){
+  if(filters._newConstruction) filters={...filters,...await newConstructionFilter(filters,key,fetcher)};
   const params=new URLSearchParams();for(const [name,value] of Object.entries(filters))if(!name.startsWith('_'))for(const item of Array.isArray(value)?value:[value])params.append(name,String(item));
   const response=await fetcher(`https://api.repliers.io/listings?${params}`,{method:'POST',headers:{'REPLIERS-API-KEY':key,Accept:'application/json','Content-Type':'application/json'},body:'{}',redirect:'error',signal:AbortSignal.timeout(20000)});
-  if(!response.ok)throw new Error('Provider unavailable.');const payload=await response.json();if(!Array.isArray(payload.listings))throw new Error('Invalid provider response.');return payload;
+  if(!response.ok)throw new Error('Provider unavailable.');const payload=await response.json();if((filters._newConstruction || filters.lastPriceChangeType) && payload.unrecognizedParams?.length)throw new Error('New construction filtering is unavailable.');if(!Array.isArray(payload.listings))throw new Error('Invalid provider response.');return payload;
 }
 const clusterCache=new Map();
 export async function mapClusters(filters,config,key,fetcher=fetch){

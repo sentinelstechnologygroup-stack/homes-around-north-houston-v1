@@ -1,45 +1,35 @@
-/// <reference types="vite/client" />
+import {accountLink,clearAccountLink} from './accountLink';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification, signOut } from 'firebase/auth';
-import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
-
-// This consumer-only project has no relationship to the GMS staff identity store.
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification, sendSignInLinkToEmail, verifyBeforeUpdateEmail, isSignInWithEmailLink, signInWithEmailLink, signOut } from 'firebase/auth';
 const projectId=import.meta.env.VITE_VISITOR_PROJECT_ID;
-export const accountsEnabled=projectId==='gcr-visitor-preview-2026' && Boolean(import.meta.env.VITE_VISITOR_API_KEY && import.meta.env.VITE_VISITOR_APP_ID);
-let services;
-function service(){
-  if(!accountsEnabled)throw new Error('Visitor accounts are not configured in this preview yet.');
-  if(!services){
-    const app=getApps().find(a=>a.name==='gcr-visitors')||initializeApp({projectId,apiKey:import.meta.env.VITE_VISITOR_API_KEY,appId:import.meta.env.VITE_VISITOR_APP_ID,authDomain:projectId+'.firebaseapp.com'},'gcr-visitors');
-    services={auth:getAuth(app),db:getFirestore(app)};
-  }
-  return services;
-}
-export function watchAccount(callback){return accountsEnabled?onAuthStateChanged(service().auth,callback):()=>{};}
-export async function enterAccount(email,password,register){
-  const auth=service().auth;
-  if(register){const credential=await createUserWithEmailAndPassword(auth,email,password);await sendEmailVerification(credential.user);return credential.user;}
-  return (await signInWithEmailAndPassword(auth,email,password)).user;
-}
-export async function verifyAccount(){const user=service().auth.currentUser;if(!user)throw new Error('Sign in first.');await sendEmailVerification(user);}
-export async function refreshAccount(){const user=service().auth.currentUser;if(!user)return null;await user.reload();await user.getIdToken(true);return user;}
-export function resetAccount(email){return sendPasswordResetEmail(service().auth,email);}
-export function leaveAccount(){return signOut(service().auth);}
-export function watchSaves(user,callback,onError){
-  if(!user?.emailVerified)return ()=>{};
-  return onSnapshot(doc(service().db,'visitors',user.uid),snapshot=>{const data=snapshot.data()||{};const homes=Array.isArray(data.homes)?data.homes.filter(id=>typeof id==='string' && /^147:[A-Za-z0-9-]{1,50}$/.test(id)).slice(0,50):[]; const searches=Array.isArray(data.searches)?data.searches.filter(s=>s && typeof s.name==='string' && s.name.length<=120 && s.filters && typeof s.filters==='object' && !Array.isArray(s.filters)).map(s=>({name:s.name,filters:Object.fromEntries(Object.entries(s.filters).filter(([k,v])=>['location','minPrice','maxPrice','beds','baths','propertyType','waterfront','newListings','minSqft','bounds','polygon','availability','mapZoom','neighborhood','featuredOnly','minLotSqft','maxLotSqft'].includes(k) && typeof v==='string' && v.length<=(k==='polygon'?6000:200)))})).slice(0,10):[]; callback({homes,searches,weekly:data.weekly!==false});},onError);
-}
-export async function updateSaves(changes){
-  const {auth,db}=service();const user=auth.currentUser;
-  if(!user?.emailVerified)throw new Error('Verify your email before saving homes or searches.');
-  await setDoc(doc(db,'visitors',user.uid),{...changes,updatedAt:serverTimestamp()},{merge:true});
-}
-export function accountError(error){
-  if(error?.code==='auth/too-many-requests')return 'Please wait before trying again.';
-  if(error?.code==='auth/weak-password' || error?.code==='auth/password-does-not-meet-requirements')return 'Use at least 12 characters for your password.';
-  if(error?.code==='auth/network-request-failed')return 'Please check your connection and try again.';
-  return 'We could not complete that account request. Check your details or reset your password.';
-}
+export const accountsEnabled=projectId==='gcr-visitor-preview-2026'&&Boolean(import.meta.env.VITE_VISITOR_API_KEY&&import.meta.env.VITE_VISITOR_APP_ID);
+let auth,cache=null,loading=null;const listeners=new Set();
+function service(){if(!accountsEnabled)throw Error('Accounts are temporarily unavailable.');if(!auth){const app=getApps().find(a=>a.name==='gcr-visitors')||initializeApp({projectId,apiKey:import.meta.env.VITE_VISITOR_API_KEY,appId:import.meta.env.VITE_VISITOR_APP_ID,authDomain:projectId+'.firebaseapp.com'},'gcr-visitors');auth=getAuth(app);}return auth;}
+async function request(body){const user=service().currentUser;if(!user?.emailVerified)throw Error('Verify your email first.');const response=await fetch('/api/visitor',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+await user.getIdToken()},body:JSON.stringify(body),signal:AbortSignal.timeout(28000)});const data=await response.json();if(!response.ok){if(response.status===409)await loadAccount();throw Error(data.error||'Your account could not be saved.');}if(service().currentUser?.uid!==user.uid)throw Error('Your sign-in changed. Please reload.');cache=data;for(const fn of listeners)fn(data);return data;}
+export function watchAccount(callback){return accountsEnabled?onAuthStateChanged(service(),user=>{cache=null;callback(user);}):()=>{};}
+function pendingKey(){return 'gcr-account-inquiries:'+service().currentUser?.uid;}
+function pendingInquiries(){try{return JSON.parse(localStorage.getItem(pendingKey())||'[]');}catch{return [];}}
+async function drainInquiries(){for(const reference of pendingInquiries()){try{await request({action:'adopt_inquiry',reference});localStorage.setItem(pendingKey(),JSON.stringify(pendingInquiries().filter(r=>r!==reference)));}catch{break;}}return cache;}
+export function loadAccount(){if(!loading)loading=request({action:'load'}).then(()=>drainInquiries()).finally(()=>{loading=null;});return loading;}
+export function watchSaves(user,callback,onError=()=>{}){if(!user?.emailVerified)return()=>{};let active=true;const notify=data=>{if(active)callback(data);};listeners.add(notify);if(cache)notify(cache);loadAccount().catch(onError);const timer=setInterval(()=>{if(document.visibilityState==='visible')loadAccount().catch(onError);},30000);return()=>{active=false;listeners.delete(notify);clearInterval(timer);};}
+export async function saveAccount(action,changes){if(!cache)await loadAccount();return request({action,revision:cache.revision,...changes});}
+export function saveProfile(profile){return saveAccount('profile',{profile});}
+export function savePermissions(permissions){return saveAccount('permissions',{permissions});}
+export function saveSearch(search,enableEmail=false){return saveAccount('save_search',{search,enableEmail});}
+export function deleteSearch(searchId){return saveAccount('delete_search',{searchId});}
+export async function updateSaves(changes){if(!cache)await loadAccount();if(changes.homes)return saveAccount('homes',{homes:changes.homes});if(changes.searches){const added=changes.searches.find(s=>!s.id);if(added)return saveSearch({...added,frequency:'off'});const removed=cache.searches.find(s=>!changes.searches.some(n=>n.id===s.id));if(removed)return deleteSearch(removed.id);}return cache;}
+export async function continueSave(changes){if(!cache)await loadAccount();return updateSaves(changes.homes?{homes:[...new Set([...changes.homes,...cache.homes])].slice(0,50)}:changes);}
+export async function sendAccountLink(email){await sendSignInLinkToEmail(service(),email,{url:window.location.origin+'/account',handleCodeInApp:true});localStorage.setItem('gcr-account-email',email);}
+export function hasAccountLink(){return accountsEnabled&&isSignInWithEmailLink(service(),accountLink());}
+export function rememberedEmail(){try{return localStorage.getItem('gcr-account-email')||'';}catch{return '';}}
+export async function completeAccountLink(email){const result=await signInWithEmailLink(service(),email,accountLink());localStorage.removeItem('gcr-account-email');clearAccountLink();window.history.replaceState({},'',window.location.pathname);return result.user;}
+export async function enterAccount(email,password){return (await signInWithEmailAndPassword(service(),email,password)).user;}
+export async function verifyAccount(){if(service().currentUser)await sendEmailVerification(service().currentUser);}
+export async function refreshAccount(){const user=service().currentUser;if(user){await user.reload();await user.getIdToken(true);}return user;}
+export function resetAccount(email){return sendPasswordResetEmail(service(),email);}
+export function leaveAccount(){cache=null;return signOut(service());}
+export function accountError(error){if(error?.code==='auth/too-many-requests')return 'Please wait before trying again.';if(error?.code==='auth/expired-action-code'||error?.code==='auth/invalid-action-code')return 'This sign-in link has expired or was already used. Request a new link.';if(error?.code?.startsWith('auth/'))return 'We could not sign you in. Check your email or request a fresh sign-in link.';return error?.message||'Your account could not be saved. Please try again.';}
 
+export async function syncInquiry(reference,email){if(!accountsEnabled||!service().currentUser?.emailVerified||email&&service().currentUser.email.toLowerCase()!==String(email).toLowerCase()||!/^([a-f0-9]{64})$/.test(reference||''))return;try{localStorage.setItem(pendingKey(),JSON.stringify([...new Set([...pendingInquiries(),reference])].slice(-20)));}catch{/* Durable intake itself is already saved by the server. */}await drainInquiries();return cache;}
 
-export async function continueSave(changes){const {auth,db}=service();if(!auth.currentUser?.emailVerified)throw Error('Verify your email first.');const ref=doc(db,'visitors',auth.currentUser.uid);await runTransaction(db,async transaction=>{const previous=(await transaction.get(ref)).data()||{},next={updatedAt:serverTimestamp()};if(changes.homes)next.homes=[...new Set([...changes.homes,...(previous.homes||[])])].slice(0,50);if(changes.searches)next.searches=[...changes.searches,...(previous.searches||[])].slice(0,10);transaction.set(ref,next,{merge:true});});}
+export function changeAccountEmail(email){if(!service().currentUser)throw Error('Sign in first.');return verifyBeforeUpdateEmail(service().currentUser,email,{url:window.location.origin+'/account',handleCodeInApp:false});}

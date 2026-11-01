@@ -11,7 +11,7 @@ const priceLabel = value => '$' + value.toLocaleString('en-US');
 export default function HeroSection() {
   const navigate = useNavigate();
   const [playVideo, setPlayVideo] = useState(false);
-  const [filters, setFilters] = useState({location:'',minPrice:'',maxPrice:'',beds:'',baths:''});
+  const [filters, setFilters] = useState({location:'',minPrice:'',maxPrice:'',beds:'',baths:'',newConstruction:'',priceReduced:''});
   const [searchError, setSearchError] = useState('');
   const update = (key,value) => { setFilters(current=>({...current,[key]:value}));setSearchError(''); };
   const search = event => {
@@ -105,14 +105,16 @@ export default function HeroSection() {
           </div>
           <form onSubmit={search} aria-label="Search homes for sale" className="space-y-4">
             <div className="grid gap-3 xl:grid-cols-[1fr_auto]">
-              <label className="block text-sm font-semibold">City, ZIP code or MLS number
-                <span className="relative mt-2 block"><MapPin aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#0A192F]/50" /><input type="search" value={filters.location} onChange={e=>update('location',e.target.value)} placeholder="Try Conroe, 77304 or an MLS number" maxLength={100} className="min-h-14 w-full rounded-lg border border-[#0A192F]/25 bg-white py-3 pl-12 pr-4 text-base font-normal focus:outline-none focus:ring-2 focus:ring-[#C5A059]" /></span>
+              <label className="block text-sm font-semibold">City, county, ZIP code or MLS number
+                <span className="relative mt-2 block"><MapPin aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#0A192F]/50" /><input type="search" value={filters.location} onChange={e=>update('location',e.target.value)} placeholder="Conroe, Montgomery County or 77304" maxLength={100} className="min-h-14 w-full rounded-lg border border-[#0A192F]/25 bg-white py-3 pl-12 pr-4 text-base font-normal focus:outline-none focus:ring-2 focus:ring-[#C5A059]" /></span>
               </label>
               <button type="submit" className="flex min-h-14 items-center justify-center gap-2 rounded-lg bg-[#C5A059] px-8 py-3 font-semibold text-[#0A192F] transition-colors hover:bg-[#B08A3E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A192F] xl:self-end"><Search aria-hidden="true" className="h-5 w-5" />Search Homes</button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[['minPrice','Min price','No minimum'],['maxPrice','Max price','No maximum'],['beds','Beds','Any beds'],['baths','Baths','Any baths']].map(([key,label,placeholder])=><label key={key} className="block min-w-0 text-sm font-semibold">{label}<select value={filters[key]} onChange={e=>update(key,e.target.value)} className="mt-2 min-h-12 w-full rounded-lg border border-[#0A192F]/25 bg-white px-3 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-[#C5A059]"><option value="">{placeholder}</option>{(key.endsWith('Price')?priceOptions:[1,2,3,4,5]).map(value=><option key={value} value={value}>{key.endsWith('Price')?priceLabel(value):`${value}+`}</option>)}</select></label>)}
             </div>
+            <label className="flex min-h-11 items-center gap-3 text-sm font-semibold"><input type="checkbox" checked={filters.newConstruction==='true'} onChange={e=>update('newConstruction',e.target.checked?'true':'')} className="h-5 w-5 accent-[#0A192F]" />New home construction only</label>
+<label className="flex min-h-11 items-center gap-3 text-sm font-semibold"><input type="checkbox" checked={filters.priceReduced==='true'} onChange={e=>update('priceReduced',e.target.checked?'true':'')} className="h-5 w-5 accent-[#0A192F]" />Price reduced</label>
             {searchError && <p role="alert" className="text-sm font-medium text-red-700">{searchError}</p>}
             <p className="text-xs leading-relaxed text-[#0A192F]/65">Browse the map and property details, then ask our local team for help.</p>
           </form>

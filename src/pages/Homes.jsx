@@ -17,7 +17,7 @@ export default function Homes() {
   const keys = ["city", "zip", "neighborhood", "minPrice", "maxPrice"];
   const src = keys.some(key => params.get(key)) ? buildHarSearchUrl(Object.fromEntries(keys.map(key => [key, params.get(key) || ""]))) : HAR_SEARCH;
   if (previewEnabled === null) return <><Navbar /><main id="main-content" className="pt-24 property-search"><header className="ps-hero"><p className="ps-eyebrow">HOMES AROUND NORTH HOUSTON</p><h1>Find your North Houston home.</h1><p role="status">Loading home search…</p></header></main><Footer /></>;
-  if (previewEnabled) return <><Navbar /><main id="main-content" className="pt-24"><PropertySearch compact searchPath="/homes" /></main><Footer /></>;
+  if (previewEnabled) return <><Navbar /><main id="main-content" className="pt-28 lg:pt-36"><PropertySearch compact searchPath="/homes" /></main><Footer /></>;
   return <PageShell title="Search North Houston Homes" intro="Find your next home in North Houston. Narrow your search by location, price, and the features that matter to you.">
     {previewEnabled && <PropertySearchPreview />}
     <a href={src} target="_blank" rel="noopener noreferrer" className="inline-block mb-6 px-6 py-3 rounded bg-[#0A192F] text-white font-semibold">Open Home Search in a New Tab ↗</a>

@@ -1,3 +1,4 @@
+import {syncInquiry} from '../../lib/visitorAccount';
 import {trackAcceptedLead,controlledTest} from '../../lib/campaignTracking';
 import CompactPreferences from './CompactPreferences';
 import React, { useState, useEffect, useRef } from "react"
@@ -5,7 +6,7 @@ import { motion } from "framer-motion"
 import { Send, CheckCircle } from "lucide-react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { campaignDefaults, resultsUrl, sendFunnelAction, funnelEvent } from "@/lib/funnelSession"
-import { CONTACT_CONSENT_TEXT, CONTACT_CONSENT_VERSION } from "@/lib/contactConsent"
+import { CONTACT_CONSENT_TEXT, CONTACT_CONSENT_VERSION, SMS_CONSENT_TEXT, SMS_CONSENT_VERSION } from "@/lib/contactConsent"
 import { captureLeadAttribution } from "@/lib/leadAttribution"
 
 const interests = [
@@ -34,7 +35,7 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
     interested_in: "buying",
     message: "",
     area: "", budgetRange: "", timeline: "", workingWithAgent: "",
-    website_check: "", weeklyListingEmailsRequested: true,
+    website_check: "", weeklyListingEmailsRequested: true, smsConsentAccepted: false,
     ...campaignDefaults(params),
   })
   const submissionId = useRef(null)
@@ -127,13 +128,14 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
           weeklyListingEmailsRequested: form.weeklyListingEmailsRequested, weeklyListingPreferencePresented: step === 2,
           message: form.message, website_check: form.website_check, formStartedAt,
           consentAccepted: true, consentVersion: CONTACT_CONSENT_VERSION, consentMethod: 'form_submission',
+          smsConsentAccepted: form.smsConsentAccepted, smsConsentVersion: SMS_CONSENT_VERSION,
           funnelProfile: { ...campaignDefaults(params), area: form.city || form.zip || form.neighborhood },
           attribution: { ...attribution, ...captureLeadAttribution() },
         }),
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok || result.accepted !== true || !result.reference) throw new Error(result.error || "We could not confirm receipt. Please contact the Golden Cross Realty office before submitting again.")
-      trackAcceptedLead({receiptId:result.reference,testOnly:controlledTest(form.name),area:form.city||form.zip});setReference(result.reference)
+      trackAcceptedLead({receiptId:result.reference,testOnly:controlledTest(form.name),area:form.city||form.zip});setReference(result.reference);void syncInquiry(result.reference,form.email).catch(()=>{})
       if (!result.sessionId || !result.sessionToken) throw new Error('Contact capture is not available yet. Please try again later.')
       setSession({ sessionId: result.sessionId, sessionToken: result.sessionToken })
       funnelEvent('contact_captured')
@@ -259,6 +261,7 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
               </>}
               {step === 2 && <CompactPreferences form={form} update={update} searchInquiry={searchInquiry} onLocation={value=>setForm(current=>({...current,location:value,city:/^\d{5}$/.test(value)?'':value,zip:/^\d{5}$/.test(value)?value:''}))} />}
               <div className="hidden" aria-hidden="true"><input aria-label="Leave this field empty" tabIndex={-1} autoComplete="off" value={form.website_check} onChange={e => update("website_check", e.target.value)} /></div>
+              {step === 1 && <label className="flex items-start gap-2 text-xs leading-relaxed text-[#0A192F]/80"><input type="checkbox" checked={form.smsConsentAccepted} onChange={e => update('smsConsentAccepted', e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />{SMS_CONSENT_TEXT}</label>}
               {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
               <button
                 type="submit"

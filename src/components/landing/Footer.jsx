@@ -19,7 +19,7 @@ export default function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr] py-12 lg:py-14">
           <div>
             <p className="text-[#C5A059] text-xs font-semibold uppercase tracking-[0.2em] mb-3">Your North Houston Home</p>
-            <h2 className="font-display text-3xl leading-tight max-w-sm">Homes Around<br />North Houston</h2>
+            <div className="flex items-center gap-4"><img src="/images/brand/homes-around-north-houston-logo.png" alt="" width="1254" height="1254" className="h-28 w-28 shrink-0 object-contain" /><h2 className="font-display text-2xl leading-tight max-w-sm">Homes Around<br />North Houston</h2></div>
             <p className="mt-4 max-w-sm text-sm text-white/75 leading-relaxed">Buy, sell, and explore investment properties with Golden Cross Realty.</p>
             <a href="https://www.goldenmarketingservices.com/" className="inline-flex items-center gap-3 mt-6 group">
               <span className="text-xs text-white/65">Powered by</span>

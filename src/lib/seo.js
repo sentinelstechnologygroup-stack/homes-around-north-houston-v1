@@ -1,5 +1,6 @@
 export const SITE_ORIGIN = 'https://www.homesaroundnorthhouston.com';
 export const pages = {
+  '/account': {title:'Your account | Homes Around North Houston',description:'Securely manage your profile, saved searches and communication preferences.',noindex:true},
   '/': { title: 'North Houston Homes for Sale | Golden Cross Realty', description: 'Search North Houston homes, plan your home sale, and explore investment properties with Golden Cross Realty. Serving Conroe, The Woodlands, Spring and nearby communities.' },
   '/buy': { title: 'Buy a Home in North Houston | Golden Cross Realty', description: 'Explore homes for sale in North Houston and discuss your preferred area, purchase budget and timeline with Golden Cross Realty.' },
   '/sell': { title: 'Sell Your North Houston Home | Home Value Analysis', description: 'Request a comparative market analysis and discuss pricing, preparation and your selling timeline with Golden Cross Realty.' },

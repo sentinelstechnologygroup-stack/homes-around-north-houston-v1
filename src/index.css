@@ -131,3 +131,5 @@ section[id] { scroll-margin-top: 7rem; }
 section[id], main[id] { scroll-margin-top: 7rem; }
 :focus-visible { outline: 3px solid #9A7437; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+@media (min-width: 1024px) { section[id], main[id] { scroll-margin-top: 9rem; } }

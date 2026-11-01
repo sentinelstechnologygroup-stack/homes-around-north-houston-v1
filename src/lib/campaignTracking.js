@@ -2,6 +2,8 @@
 // Only explicit, non-personal campaign fields may cross this boundary.
 const env = /** @type {Record<string,string>} */ (import.meta.env || {});
 const KEY='realestate:privacy:v1';
+// Meta reads the URL itself. Permit only its opaque click ID; inquiry/search URLs stay excluded.
+export function safeMetaUrl(url){try{const u=new URL(url);return (!u.hash||u.hash==='#contact')&&[...u.searchParams].every(([key,value])=>(key==='fbclid'&&/^[a-zA-Z0-9_-]{1,1000}$/.test(value))||(key==='interest'&&['buying','selling','investing'].includes(value))||(key==='campaign'&&['hanh-new-homes-400k','hanh-new-construction'].includes(value))||(['ad_id','adset_id','campaign_id'].includes(key)&&/^\d{5,25}$/.test(value))||(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','placement'].includes(key)&&/^[a-zA-Z0-9_.-]{1,100}$/.test(value)));}catch{return false;}}
 let initialized=false;
 const memory=new Set();
 const host=()=>typeof window==='undefined'?null:/** @type {any} */(window);
@@ -18,7 +20,7 @@ export function applyConsent(choice){const w=host();if(!w)return;const c=normali
  const ads=/^AW-\d+$/.test(env.VITE_GOOGLE_ADS_ID||'')?env.VITE_GOOGLE_ADS_ID:'';
  if((c.analytics&&ga)||(c.ads&&ads)){script('campaign-gtag','https://www.googletagmanager.com/gtag/js?id='+(c.analytics&&ga?ga:ads));tag('js',new Date());if(c.analytics&&ga)tag('config',ga,{send_page_view:false,allow_google_signals:false,allow_ad_personalization_signals:false,page_location:safePage(w.location.href),page_referrer:''});if(c.ads&&ads)tag('config',ads,{send_page_view:false,allow_ad_personalization_signals:false});}
  if((c.analytics||c.ads)&&/^GTM-[A-Z0-9]+$/.test(env.VITE_GTM_ID||'')){w.dataLayer.push({'gtm.start':Date.now(),event:'gtm.js'});script('campaign-gtm','https://www.googletagmanager.com/gtm.js?id='+env.VITE_GTM_ID);}
- if(c.ads&&!w.location.search&&!w.location.hash&&/^\d{8,20}$/.test(env.VITE_META_PIXEL_ID||'')&&!w.fbq){const fb=function(...args){fb.callMethod?fb.callMethod(...args):fb.queue.push(args);};fb.queue=[];fb.callMethod=null;fb.loaded=true;fb.version='2.0';w.fbq=fb;w._fbq=fb;script('campaign-meta','https://connect.facebook.net/en_US/fbevents.js');w.fbq('set','autoConfig',false,env.VITE_META_PIXEL_ID);w.fbq('init',env.VITE_META_PIXEL_ID);}
+ if(c.ads&&safeMetaUrl(w.location.href)&&/^\d{8,20}$/.test(env.VITE_META_PIXEL_ID||'')&&!w.fbq){const fb=function(...args){fb.callMethod?fb.callMethod(...args):fb.queue.push(args);};fb.queue=[];fb.callMethod=null;fb.loaded=true;fb.version='2.0';w.fbq=fb;w._fbq=fb;script('campaign-meta','https://connect.facebook.net/en_US/fbevents.js');w.fbq('set','autoConfig',false,env.VITE_META_PIXEL_ID);w.fbq('init',env.VITE_META_PIXEL_ID);w.fbq('track','PageView');}
  if(w.fbq)w.fbq('consent',c.ads?'grant':'revoke');
 }
 export function saveConsent(choice){const w=host();if(!w)return;initializeTracking();const c=normalizeConsent(choice,w.navigator.globalPrivacyControl===true);w.localStorage.setItem(KEY,JSON.stringify(c));applyConsent(c);w.dispatchEvent(new Event('campaign:consent'));return c;}
@@ -29,7 +31,7 @@ export function trackAcceptedLead({receiptId,testOnly=false,area='',kind='inquir
  if(c.analytics&&/^G-[A-Z0-9]+$/.test(env.VITE_GA4_ID||''))once('ga4',()=>tag('event','generate_lead',{...params,send_to:env.VITE_GA4_ID}));
  if(c.ads&&/^AW-\d+$/.test(env.VITE_GOOGLE_ADS_ID||'')&&/^[a-zA-Z0-9_-]{3,100}$/.test(env.VITE_GOOGLE_ADS_LABEL||''))once('ads',()=>tag('event','conversion',{send_to:env.VITE_GOOGLE_ADS_ID+'/'+env.VITE_GOOGLE_ADS_LABEL,transaction_id:id,page_location:params.page_location}));
  // Meta automatically captures the page URL: never send from a URL containing inquiry/search data.
- if(c.ads&&w.fbq&&!w.location.search&&!w.location.hash)once('meta',()=>w.fbq('track','Lead',{content_category:params.inquiry_type},{eventID:id}));
+ if(c.ads&&w.fbq&&safeMetaUrl(w.location.href))once('meta',()=>w.fbq('track','Lead',{content_category:params.inquiry_type},{eventID:id}));
 }
 
 export function trackBehavior(name,parameters={}){initializeTracking();const w=host(),c=readConsent();if(!w||!c?.analytics||!/^G-[A-Z0-9]+$/.test(env.VITE_GA4_ID||''))return;

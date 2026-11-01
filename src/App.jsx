@@ -1,3 +1,4 @@
+import Account from './pages/Account';
 import CampaignConsent from './components/CampaignConsent';
 import { Toaster } from "@/components/ui/toaster"
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
@@ -20,6 +21,7 @@ export function SiteRoutes() {
       <ScrollToTop /><CampaignConsent />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/account" element={<Account />} />
         <Route path="/buy" element={<IntentPage interest="buying" />} />
         <Route path="/sell" element={<IntentPage interest="selling" />} />
         <Route path="/investment-properties" element={<IntentPage interest="investing" />} />

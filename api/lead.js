@@ -1,6 +1,6 @@
 import {parseRequestBody,localRate,beginIntake,finishIntake,uncertainIntake,verifyBotToken,sendRequestError,RequestError} from '../server/request-security.js';
 import { createHash } from 'node:crypto';
-import { contactAcknowledgement } from '../src/lib/contactConsent.js';
+import { contactAcknowledgement, smsAcknowledgement } from '../src/lib/contactConsent.js';
 
 const clean = (value, max = 200) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 const interests = { buying: 'Buying', selling: 'Selling', investing: 'Investment Properties', buying_and_selling: 'Buying & Selling' };
@@ -18,17 +18,18 @@ export default async function handler(req, res) {
   if(process.env.VERCEL_ENV==='preview' && process.env.VERCEL_URL) origins.push('https://'+process.env.VERCEL_URL);
   if (!req.headers.origin || !origins.includes(req.headers.origin)) return res.status(403).json({ error: 'Origin not allowed' });
   let body;
-  try { body=parseRequestBody(req,20000);const activity=['active','hidden','exit','complete','verify_email','verify_sms'].includes(body.funnelAction);localRate(req,activity?'lead-session':'lead-capture',activity?180:10); } catch(error){return sendRequestError(res,error);}
+  try { body=parseRequestBody(req,20000);const activity=['active','hidden','exit','complete','verify_email','verify_sms','verify_sms_short'].includes(body.funnelAction);localRate(req,activity?'lead-session':'lead-capture',activity?180:10); } catch(error){return sendRequestError(res,error);}
   if (clean(body.website_check)) return res.status(400).json({ error: 'Invalid request' });
+  if(body.funnelAction==='verify_sms_short'){if(!/^[A-Za-z0-9_-]{22}$/.test(body.confirmationCode||''))return res.status(400).json({error:'Invalid confirmation link'});return forwardGhl({action:'inquiry_session',funnelAction:'verify_sms_short',confirmationCode:body.confirmationCode},res,req,body);}
   if (['active','hidden','exit','complete','verify_email','verify_sms'].includes(body.funnelAction)) {
     if (!/^[a-f0-9]{64}$/.test(body.sessionId || '') || !/^[a-f0-9]{64}$/.test(body.sessionToken || '')) return res.status(400).json({ error: 'Invalid session' });
     const goals = { ...(body.searchCriteria || {}), ...(body.property ? {boardId:body.property.boardId,mlsNumber:body.property.mlsNumber,propertyAddress:body.property.address} : {}), ...(body.funnelProfile || {}) };
-    const funnelProfile = Object.fromEntries(['area','city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext','budgetRange','timeline','workingWithAgent'].map(key => [key, clean(goals[key],key==='polygon'?6000:200)]));
+    const funnelProfile = Object.fromEntries(['area','city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newConstruction','priceReduced','newListings','boardId','mlsNumber','propertyAddress','inquiryContext','budgetRange','timeline','workingWithAgent'].map(key => [key, clean(goals[key],key==='polygon'?6000:200)]));
     funnelProfile.interested_in = Object.hasOwn(interests, goals.interested_in) ? goals.interested_in : '';
     funnelProfile.message = clean(goals.message, 2000);
     funnelProfile.weeklyListingPreferencePresented = goals.weeklyListingPreferencePresented === true;
     funnelProfile.weeklyListingEmailsRequested = goals.weeklyListingPreferencePresented === true && goals.weeklyListingEmailsRequested === true;
-    if(process.env.INQUIRY_GHL_ENABLED==='true'&&['active','hidden','exit','complete'].includes(body.funnelAction))return forwardGhl({action:'inquiry_session',funnelAction:body.funnelAction,sessionId:body.sessionId,sessionToken:body.sessionToken,funnelProfile},res,req,body);
+    if(process.env.INQUIRY_GHL_ENABLED==='true'&&['active','hidden','exit','complete','verify_sms'].includes(body.funnelAction))return forwardGhl({action:'inquiry_session',funnelAction:body.funnelAction,sessionId:body.sessionId,sessionToken:body.sessionToken,funnelProfile},res,req,body);
     return forward({ funnelAction: body.funnelAction, sessionId: body.sessionId, sessionToken: body.sessionToken, funnelProfile, funnelTelemetry: body.funnelTelemetry }, res, req.headers.origin, req, body);
   }
   const submissionId = clean(body.submissionId, 80);
@@ -43,6 +44,8 @@ export default async function handler(req, res) {
   }
   const acknowledgement=contactAcknowledgement(body);
   if (!acknowledgement) return res.status(400).json({ error: 'Please reload the form and try again.' });
+  const sms=smsAcknowledgement(body);
+  if (!sms) return res.status(400).json({ error: 'Please reload the form to review the current SMS permission.' });
   const started = Date.parse(body.formStartedAt);
   const elapsed = Date.now() - started;
   if (!Number.isFinite(elapsed) || elapsed < 1500 || elapsed > 86400000) return res.status(400).json({ error: 'Please reload the page and try again.' });
@@ -53,7 +56,7 @@ export default async function handler(req, res) {
   const now = new Date().toISOString();
   const goals = { ...(body.searchCriteria || {}), ...(body.property ? {boardId:body.property.boardId,mlsNumber:body.property.mlsNumber,propertyAddress:body.property.address} : {}), ...(body.funnelProfile || {}) };
   const attribution = { sourceSite: 'homes-around-north-houston', channel: 'website', provider: 'GMS Pro', inquiryType: body.interested_in };
-  for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'cta', 'campaign']) attribution[key] = clean(body.attribution?.[key], 200);
+  for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'cta', 'campaign', 'ad_id', 'adset_id', 'campaign_id', 'placement']) attribution[key] = clean(body.attribution?.[key], 200);
   const lead = {
     weeklyListingPreferencePresented: body.weeklyListingPreferencePresented === true,
     weeklyListingEmailsRequested: body.weeklyListingPreferencePresented === true && body.weeklyListingEmailsRequested === true,
@@ -61,16 +64,16 @@ export default async function handler(req, res) {
     services: [interest], sources: ['Homes Around North Houston website'],
     notes: `Interest: ${interest}\n${clean(body.message, 2000)}\nSearch/property context: ${JSON.stringify(Object.fromEntries(['location','city','zip','minPrice','maxPrice','beds','baths','boardId','mlsNumber','propertyAddress'].map(key=>[key,clean(goals[key],key==='polygon'?6000:200)]).filter(([,value])=>value)))}`,
     pageUrl: `${req.headers.origin}/`, submittedAt: now, attribution,
-    consent: { ...acknowledgement, capturedAt: now },
+    consent: { ...acknowledgement, ...sms, capturedAt: now },
     funnelProfile: {
       area: clean(goals.area, 200), budgetRange: clean(goals.budgetRange, 100), timeline: clean(goals.timeline, 100),
       propertyType: clean(goals.propertyType, 100), workingWithAgent: clean(goals.workingWithAgent, 30), financingStatus: clean(goals.financingStatus, 100),
-      ...Object.fromEntries(['city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newListings','boardId','mlsNumber','propertyAddress','inquiryContext'].map(key => [key, clean(goals[key],key==='polygon'?6000:200)])),
+      ...Object.fromEntries(['city','zip','neighborhood','minPrice','maxPrice','location','beds','baths','propertyType','bounds','polygon','availability','minSqft','waterfront','newConstruction','priceReduced','newListings','boardId','mlsNumber','propertyAddress','inquiryContext'].map(key => [key, clean(goals[key],key==='polygon'?6000:200)])),
       completionStatus: body.funnelAction === 'capture' ? 'contact_captured' : 'completed',
     },
   };
   if (body.funnelAction === 'capture') { lead.funnelAction = 'capture'; lead.funnelTelemetry = body.funnelTelemetry; }
-  if(process.env.INQUIRY_GHL_ENABLED==='true')return forwardGhl({action:'inquiry_email',site:'north',submissionId:lead.submissionId,name:lead.name,email:lead.email,phone:lead.phone,interest:lead.services[0],message:clean(body.message,2000),property:goals.boardId&&goals.mlsNumber?{boardId:goals.boardId,mlsNumber:goals.mlsNumber,address:goals.propertyAddress}:null,searchCriteria:body.searchCriteria||{},weekly:lead.weeklyListingEmailsRequested,consent:lead.consent},res,req,body);
+  if(process.env.INQUIRY_GHL_ENABLED==='true')return forwardGhl({action:'inquiry_email',site:'north',submissionId:lead.submissionId,name:lead.name,email:lead.email,phone:lead.phone,interest:lead.services[0],message:clean(body.message,2000),property:goals.boardId&&goals.mlsNumber?{boardId:goals.boardId,mlsNumber:goals.mlsNumber,address:goals.propertyAddress}:null,searchCriteria:body.searchCriteria||{},weekly:lead.weeklyListingEmailsRequested,consent:lead.consent,attribution:lead.attribution},res,req,body);
   return forward(lead, res, req.headers.origin, req, body);
 }
 
