@@ -6,7 +6,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { searchInquiryUrl } from '@/lib/funnelSession';
 import VisitorAccount from './VisitorAccount';
-import {watchAccount,watchSaves,updateSaves,continueSave} from '../../lib/visitorAccount';
+import {watchAccount,watchSaves,updateSaves,continueSave,recordViewed} from '../../lib/visitorAccount';
 import './property-search.css';
 const PropertyMap=lazy(()=>import('./PropertyMap'));
 const empty={location:'',neighborhood:'',minPrice:'',maxPrice:'',beds:'',baths:'',propertyType:'',waterfront:'false',newConstruction:'false',priceReduced:'false',newListings:'false',minSqft:'',bounds:'',polygon:'',availability:'all',mapZoom:'',featuredOnly:'false',minLotSqft:'',maxLotSqft:''};
@@ -56,6 +56,7 @@ export default function PropertySearch({ compact=false,searchPath='/mls-search' 
   async function saveSearch(){setEmailCriteria(filters);await persist({searches:[{name:filters.location||'Map area',filters},...searches].slice(0,10)},'Search saved to your profile.');}
   function open(listing){navigate(`/property/${listing.boardId}/${listing.mlsNumber}?${params}`);}
   const listings=result?.listings||[],detail=listings[0];
+  useEffect(()=>{if(detailMode&&detail?.boardId&&detail?.mlsNumber&&user?.emailVerified)void recordViewed(detail.boardId+':'+detail.mlsNumber).catch(()=>{});},[detailMode,detail?.boardId,detail?.mlsNumber,user?.emailVerified]);
   const mapData=mapResult?.key===filterKey&&mapResult?.scope===mapScope?mapResult:result;
   return <div className={'property-search '+(compact?'ps-compact':'')}><VisitorAccount onEmail={()=>setEmailRequest(v=>v+1)} user={user} onRefresh={setUser} requestId={accountRequest} />
     {!detailMode && <header className="ps-hero"><p className="ps-eyebrow">HOMES AROUND NORTH HOUSTON</p><h1 ref={title}>{detailMode?'A place for your next chapter.':compact?'Find your North Houston home.':'Find a place that feels like yours.'}</h1><p>{detailMode?'Explore the details, then let our team help with the next step.':compact?'Explore homes, compare neighborhoods and find your next move.':'Explore the map, save your favorites and discover what comes next.'}</p></header>}
