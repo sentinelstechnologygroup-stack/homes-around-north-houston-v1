@@ -1,3 +1,4 @@
+import {PhoneInput} from '../FormControls';
 import {syncInquiry} from '../../lib/visitorAccount';
 import {trackAcceptedLead,controlledTest} from '../../lib/campaignTracking';
 import CompactPreferences from './CompactPreferences';
@@ -234,10 +235,9 @@ export default function LeadFormSection({ popup = false, open = true, closeRef, 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block font-body text-sm font-medium text-[#0A192F] mb-1.5">Phone *</label>
-                  <input
+                  <PhoneInput
                     required
                     aria-label="Phone"
-                    type="tel"
                     value={form.phone}
                     onChange={(e) => update("phone", e.target.value)}
                     className="w-full px-4 py-3 rounded-lg border border-[#0A192F]/10 font-body text-sm focus:outline-none focus:border-[#C5A059] transition-colors"

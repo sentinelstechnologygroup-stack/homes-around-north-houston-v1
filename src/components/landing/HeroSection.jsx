@@ -1,3 +1,4 @@
+import {LocationInput} from '../FormControls';
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -106,7 +107,7 @@ export default function HeroSection() {
           <form onSubmit={search} aria-label="Search homes for sale" className="space-y-4">
             <div className="grid gap-3 xl:grid-cols-[1fr_auto]">
               <label className="block text-sm font-semibold">City, county, ZIP code or MLS number
-                <span className="relative mt-2 block"><MapPin aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#0A192F]/50" /><input type="search" value={filters.location} onChange={e=>update('location',e.target.value)} placeholder="Conroe, Montgomery County or 77304" maxLength={100} className="min-h-14 w-full rounded-lg border border-[#0A192F]/25 bg-white py-3 pl-12 pr-4 text-base font-normal focus:outline-none focus:ring-2 focus:ring-[#C5A059]" /></span>
+                <span className="relative mt-2 block"><MapPin aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#0A192F]/50" /><LocationInput type="search" value={filters.location} onChange={e=>update('location',e.target.value)} placeholder="Conroe, Montgomery County or 77304" maxLength={100} className="min-h-14 w-full rounded-lg border border-[#0A192F]/25 bg-white py-3 pl-12 pr-4 text-base font-normal focus:outline-none focus:ring-2 focus:ring-[#C5A059]" /></span>
               </label>
               <button type="submit" className="flex min-h-14 items-center justify-center gap-2 rounded-lg bg-[#C5A059] px-8 py-3 font-semibold text-[#0A192F] transition-colors hover:bg-[#B08A3E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A192F] xl:self-end"><Search aria-hidden="true" className="h-5 w-5" />Search Homes</button>
             </div>
