@@ -66,7 +66,7 @@ export default function Footer() {
         <div className="border-t border-white/15 py-6 flex flex-col gap-4 text-xs text-white/65 lg:flex-row lg:items-center lg:justify-between">
           <p>© {new Date().getFullYear()} Homes Around North Houston. All rights reserved.</p>
           <p className="flex items-center gap-2"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 12h6M9 16h6" /></svg>Equal Housing Opportunity</p>
-          <div className="flex gap-5"><Link to="/privacy" className="hover:text-white underline underline-offset-4">Privacy Policy</Link><Link to="/terms" className="hover:text-white underline underline-offset-4">Terms &amp; Disclosures</Link></div>
+          <div className="flex flex-wrap gap-5"><button type="button" onClick={()=>window.dispatchEvent(new Event('gms-cookie-settings'))} className="underline underline-offset-4 hover:opacity-80">Cookie settings</button><Link to="/privacy" className="hover:text-white underline underline-offset-4">Privacy Policy</Link><Link to="/terms" className="hover:text-white underline underline-offset-4">Terms &amp; Disclosures</Link></div>
         </div>
       </div>
     </footer>
